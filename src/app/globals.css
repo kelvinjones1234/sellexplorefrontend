@@ -1,42 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === Light Mode === */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Backgrounds */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-surface: #fefcf9;
+
+  /* Text */
+  --color-text: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #9ca3af;
+
+  /* Headings & Body */
+  --color-heading: #1f2937;
+  --color-body: #4b5563;
+
+  /* Brand (Orange + Blue Accent) */
+  --color-primary: #f97316;
+  --color-primary-hover: #ea580c;
+  --color-primary-light: #fdba74;
+  --color-primary-dark: #c2410c;
+
+  --color-accent: #1d4ed8;
+
+  /* Borders & Shadows */
+  --color-border: #e2e8f0;
+  --color-border-secondary: #f1f5f9;
+  --color-border-strong: #d1d5db;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+
+  /* Light Cards */
+  --card-bg-1: #fff7ed;
+  --card-text-1: #9a3412;
+
+  --card-bg-2: #eff6ff;
+  --card-text-2: #1d4ed8;
+
+  --card-bg-3: #ecfdf5;
+  --card-text-3: #047857;
+
+  --card-bg-4: #fef2f2;
+  --card-text-4: #b91c1c;
+
+  --card-bg-5: #fefce8;
+  --card-text-5: #854d0e;
+
+  --dashboard-card-bg: #f3f4f6;
+  --color-success: #2AAA8A;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* === Dark Mode (deep navy theme) === */
+html.dark {
+  /* Backgrounds */
+  /* --color-bg: #0b1120; */
+  --color-bg: #1E293B;
+
+  --color-bg-secondary: #111827;
+  --color-surface: #1e293b;
+
+  /* Text */
+  --color-text: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+
+  /* Headings & Body */
+  --color-heading: #f1f5f9;
+  --color-body: #d1d5db;
+
+  /* Brand */
+  --color-primary: #fb923c;
+  --color-primary-hover: #f97316;
+  --color-primary-light: #fed7aa;
+  --color-primary-dark: #ea580c;
+
+  --color-accent: #3b82f6;
+
+  /* Borders & Shadows */
+  --color-border: #334155;
+  --color-border-secondary: #93C5FD0D; /* slate-800 */
+  --color-border-strong: #334155;
+  --color-shadow: rgba(0, 0, 0, 0.7);
+
+  /* Dark Cards */
+  --card-bg-1: #1e293b;
+  --card-text-1: #38bdf8;
+
+  --card-bg-2: #1e3a5f;
+  --card-text-2: #60a5fa;
+
+  --card-bg-3: #0f172a;
+  --card-text-3: #3b82f6;
+
+  --card-bg-4: #1e1b4b;
+  --card-text-4: #818cf8;
+
+  --card-bg-5: #1e293b;
+  --card-text-5: #fb923c;
+
+  --dashboard-card-bg: #111827;
+  --color-success: #2AAA8A;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-heading);
   }
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+@layer utilities {
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
   }
+}
+
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
 }
