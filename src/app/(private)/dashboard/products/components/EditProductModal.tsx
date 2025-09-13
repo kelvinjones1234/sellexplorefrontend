@@ -1,19 +1,20 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronDown, Plus, Check, X, ImagePlus } from "lucide-react";
+import { ChevronDown, Plus, Check, X } from "lucide-react";
 import FloatingLabelInput from "@/app/component/fields/Input";
 import FloatingLabelTextarea from "@/app/component/fields/Textarea";
 import FancySelect from "../add-product/components/FancySelect";
 import OptionModal from "./OptionModal";
-import { Product, ProductOption, CategoryResponse } from "../types";
+import { Product, ProductOption, ProductImage, Category } from "../types";
+import { apiClient } from "../api";
 
 interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
   onSave: (updatedProduct: Product) => void;
-  categories: CategoryResponse[];
+  categories: Category[];
 }
 
 const EditProductModal: React.FC<EditProductModalProps> = ({
@@ -35,20 +36,22 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const addMoreImagesRef = useRef<HTMLInputElement>(null);
 
-  console.log("Products", product);
-  //   console.log("currentProduct", currentProduct)
-
   useEffect(() => {
     if (product && isOpen) {
+      const thumbnailIndex = product.images.findIndex(
+        (img) => img.is_thumbnail
+      );
       setCurrentProduct({
         ...product,
         images: product.images.map((img) => ({
           ...img,
           preview: img.image,
           file: null,
+          isNew: false,
+          toDelete: false,
         })),
-        thumbnailIndex:
-          product.images.findIndex((img) => img.is_thumbnail) || 0,
+        thumbnailIndex: thumbnailIndex !== -1 ? thumbnailIndex : 0, // Default to 0 if no thumbnail
+        deletedImageIds: [],
       });
       setError(null);
     }
@@ -68,43 +71,117 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     _index: number
   ) => {
     if (e.target.files && currentProduct) {
-      const newImages = Array.from(e.target.files).map((file, index) => ({
-        id: Date.now() + index,
-        image: URL.createObjectURL(file),
-        is_thumbnail: false,
-        preview: URL.createObjectURL(file),
-        file,
+      const newImages: ProductImage[] = Array.from(e.target.files).map(
+        (file) => ({
+          id: undefined,
+          image: URL.createObjectURL(file),
+          is_thumbnail: false,
+          preview: URL.createObjectURL(file),
+          file,
+          isNew: true,
+          toDelete: false,
+        })
+      );
+
+      setCurrentProduct({
+        ...currentProduct,
+        images: [
+          ...currentProduct.images.filter((img) => !img.toDelete),
+          ...newImages,
+        ],
+        thumbnailIndex: currentProduct.thumbnailIndex ?? 0, // Preserve or default to 0
+      });
+    }
+  };
+
+  const setThumbnail = async (_productIndex: number, imgIndex: number) => {
+    if (currentProduct) {
+      const visibleImages = currentProduct.images.filter(
+        (img) => !img.toDelete
+      );
+      const selectedImage = visibleImages[imgIndex];
+
+      if (!selectedImage) return;
+
+      const updatedImages = currentProduct.images.map((img) => ({
+        ...img,
+        is_thumbnail: img === selectedImage,
       }));
 
-      setCurrentProduct({
-        ...currentProduct,
-        images: [...currentProduct.images, ...newImages],
-      });
+      if (selectedImage.isNew) {
+        setCurrentProduct({
+          ...currentProduct,
+          images: updatedImages,
+          thumbnailIndex: imgIndex,
+        });
+      } else {
+        try {
+          await apiClient.setProductThumbnail(
+            currentProduct.id,
+            selectedImage.id!
+          );
+          setCurrentProduct({
+            ...currentProduct,
+            images: updatedImages,
+            thumbnailIndex: imgIndex,
+          });
+        } catch (err) {
+          setError("Failed to update thumbnail. Please try again.");
+          console.error("Error updating thumbnail:", err);
+        }
+      }
     }
   };
 
-  const setThumbnail = (_productIndex: number, imgIndex: number) => {
+  const deleteImage = async (index: number) => {
     if (currentProduct) {
-      setCurrentProduct({
-        ...currentProduct,
-        thumbnailIndex: imgIndex,
-      });
-    }
-  };
+      const visibleImages = currentProduct.images.filter(
+        (img) => !img.toDelete
+      );
+      const imageToDelete = visibleImages[index];
+      const actualIndex = currentProduct.images.indexOf(imageToDelete);
 
-  const deleteImage = (index: number) => {
-    if (currentProduct) {
-      const currentThumbnailIndex = currentProduct.thumbnailIndex ?? 0;
-      setCurrentProduct({
-        ...currentProduct,
-        images: currentProduct.images.filter((_, i) => i !== index),
-        thumbnailIndex:
-          currentThumbnailIndex === index
-            ? 0
-            : currentThumbnailIndex > index
-            ? currentThumbnailIndex - 1
-            : currentThumbnailIndex,
-      });
+      if (!imageToDelete) return;
+
+      if (imageToDelete.isNew) {
+        const updatedImages = currentProduct.images.filter(
+          (_, i) => i !== actualIndex
+        );
+        if (imageToDelete.preview) {
+          URL.revokeObjectURL(imageToDelete.preview);
+        }
+
+        setCurrentProduct({
+          ...currentProduct,
+          images: updatedImages,
+          thumbnailIndex: Math.min(
+            currentProduct.thumbnailIndex ?? 0, // Default to 0 if undefined
+            updatedImages.filter((img) => !img.toDelete).length - 1
+          ),
+        });
+      } else {
+        try {
+          await apiClient.deleteProductImage(imageToDelete.id!);
+          const updatedImages = currentProduct.images.filter(
+            (_, i) => i !== actualIndex
+          );
+
+          setCurrentProduct({
+            ...currentProduct,
+            images: updatedImages,
+            thumbnailIndex: Math.min(
+              currentProduct.thumbnailIndex ?? 0, // Default to 0 if undefined
+              updatedImages.filter((img) => !img.toDelete).length - 1
+            ),
+            deletedImageIds: imageToDelete.id
+              ? [...(currentProduct.deletedImageIds || []), imageToDelete.id]
+              : currentProduct.deletedImageIds,
+          });
+        } catch (err) {
+          setError("Failed to delete image. Please try again.");
+          console.error("Error deleting image:", err);
+        }
+      }
     }
   };
 
@@ -194,10 +271,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
   if (!isOpen || !currentProduct) return null;
 
+  const visibleImages = currentProduct.images.filter((img) => !img.toDelete);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-[var(--color-bg)] rounded-2xl shadow-xl w-11/12 max-w-md max-h-[80vh] flex flex-col animate-in fade-in-0 zoom-in-95">
-        {/* Header Section - Fixed */}
         <div className="flex-shrink-0 p-6 pb-0">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800">
@@ -219,15 +297,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           )}
         </div>
 
-        {/* Scrollable Content Section */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="max-w-md mx-auto">
-            {/* Images Section */}
             <div className="flex items-center gap-3 overflow-x-auto pb-2">
-              {currentProduct.images.length ? (
-                currentProduct.images.map((img, idx) => (
+              {visibleImages.length ? (
+                visibleImages.map((img, idx) => (
                   <div
-                    key={idx}
+                    key={img.id || `new-${idx}`}
                     className="relative flex-shrink-0"
                     onClick={() => setThumbnail(currentProduct.id, idx)}
                     role="button"
@@ -237,12 +313,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       src={img.preview || "/placeholder.png"}
                       alt={`Product image ${idx + 1}`}
                       className={`w-16 h-16 rounded-lg object-cover cursor-pointer border-2 ${
-                        currentProduct.thumbnailIndex === idx
+                        (currentProduct.thumbnailIndex ?? 0) === idx
                           ? "border-[var(--color-primary)]"
                           : "border-transparent"
                       }`}
                     />
-                    {currentProduct.thumbnailIndex !== idx && (
+                    {(currentProduct.thumbnailIndex ?? 0) !== idx && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -255,7 +331,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       </button>
                     )}
 
-                    {currentProduct.thumbnailIndex === idx && (
+                    {(currentProduct.thumbnailIndex ?? 0) === idx && (
                       <div className="absolute top-1 right-1 bg-[var(--color-primary)] text-white w-4 h-4 flex items-center justify-center rounded-full text-xs">
                         <Check className="w-3 h-3" />
                       </div>
@@ -286,7 +362,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               aria-hidden="true"
             />
 
-            {/* Product Details */}
             <div className="mt-4 flex flex-col gap-4">
               <div className="mb-3">
                 <FloatingLabelInput
@@ -319,7 +394,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 onChange={(e) => updateDetail("description", e.target.value)}
               />
 
-              {/* Pricing Section */}
               <div className="py-4">
                 <button
                   onClick={() => setIsPricingOpen(!isPricingOpen)}
@@ -358,7 +432,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 )}
               </div>
 
-              {/* Quantity Section */}
               <div>
                 <button
                   onClick={() => setIsQuantityOpen(!isQuantityOpen)}
@@ -384,7 +457,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                               Math.max(0, Number(currentProduct.quantity) - 1)
                             )
                           }
-                          className="w-8 h-8 flex items-center justify-center rounded-md bg-[var(--color-border-secondary)] hover:bg-[var(--color-border)] text-lg font-bold"
+                          className="w-8 h-8 enchantica-product-modal flex items-center justify-center rounded-md bg-[var(--color-border-secondary)] hover:bg-[var(--color-border)] text-lg font-bold"
                           aria-label="Decrease quantity"
                         >
                           -
@@ -441,7 +514,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 )}
               </div>
 
-              {/* Options Section */}
               <div>
                 <button
                   onClick={() => setIsOptionsOpen(!isOptionsOpen)}
@@ -456,10 +528,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 </button>
                 {isOptionsOpen && (
                   <div id="options-section" className="py-2">
-                    {currentProduct.options.length ? (
+                    {currentProduct.options &&
+                    currentProduct.options.length > 0 ? (
                       currentProduct.options.map((option, idx) => (
                         <div
-                          key={option.id}
+                          key={option.id || `option-${idx}`}
                           className="flex items-center gap-2 mb-2 cursor-pointer"
                           onClick={() => openOptionModal(idx)}
                         >
@@ -469,7 +542,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                               src={
                                 option.image instanceof File
                                   ? URL.createObjectURL(option.image)
-                                  : option.image || "/placeholder.png"
+                                  : typeof option.image === "string"
+                                  ? option.image
+                                  : "/placeholder.png"
                               }
                               alt={option.name}
                               className="w-8 h-8 object-cover rounded"
@@ -503,7 +578,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 )}
               </div>
 
-              {/* Extra Info Section */}
               <div>
                 <button
                   onClick={() => setIsExtraOpen(!isExtraOpen)}
@@ -532,9 +606,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           </div>
         </div>
 
-        {/* Footer Section - Fixed */}
         <div className="flex-shrink-0 p-6 pt-0">
-          {/* Option Modal */}
           <OptionModal
             isOpen={isOptionModalOpen}
             onClose={closeOptionModal}
@@ -546,7 +618,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             }
           />
 
-          {/* Save Button */}
           <div className="mt-6 flex justify-end gap-2">
             <button
               onClick={onClose}

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Store,
+  Store as StoreIcon,
   MapPin,
   Briefcase,
   Type,
@@ -13,66 +13,23 @@ import {
   X,
   Plus,
   Trash,
-  ChevronDown,
 } from "lucide-react";
-import Link from "next/link";
 import FloatingLabelInput from "@/app/component/fields/Input";
 import FloatingLabelTextarea from "@/app/component/fields/Textarea";
 import FloatingLabelSelect from "@/app/component/fields/Selection";
-
-// --- Interfaces ---
-interface Option {
-  value: string;
-  label: string;
-}
-
-interface BasicDetails {
-  phone: string;
-  name: string;
-  description: string;
-}
-
-interface LocationDetails {
-  country: string;
-  state: string;
-  address: string;
-  delivery: string;
-}
-
-interface SocialLinks {
-  twitter: string;
-  facebook: string;
-  tiktok: string;
-  snapchat: string;
-  instagram: string;
-}
-
-interface ExtraInfo {
-  deliveryTime: string;
-  policy: string;
-}
-
-interface FAQ {
-  id: number;
-  question: string;
-  answer: string;
-}
-
-interface Image {
-  id: number;
-  url: string;
-  name: string;
-}
-
-interface AboutUs {
-  story: string;
-}
-
-interface Tab {
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
+import {
+  StoreFAQ,
+  Option,
+  BasicDetails,
+  LocationDetails,
+  SocialLinks,
+  ExtraInfo,
+  AboutUs,
+  Tab,
+  LocalFAQ,
+} from "../types";
+import { apiClient } from "../api";
+import { useAuth } from "@/context/AuthContext";
 
 // --- Data for Selections ---
 const countryOptions: Option[] = [
@@ -118,7 +75,7 @@ const productOptions: string[] = [
 ];
 
 const tabs: Tab[] = [
-  { id: "basic", label: "Basic Details", icon: Store },
+  { id: "basic", label: "Basic Details", icon: StoreIcon },
   { id: "location", label: "Location Details", icon: MapPin },
   { id: "category", label: "Business Category", icon: Briefcase },
   { id: "about", label: "About Us", icon: Type },
@@ -126,8 +83,6 @@ const tabs: Tab[] = [
   { id: "extra", label: "Extra Info", icon: Info },
   { id: "faqs", label: "FAQs", icon: HelpCircle },
 ];
-
-// --- Tab Components ---
 
 interface BasicTabProps {
   basicDetails: BasicDetails;
@@ -305,15 +260,15 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
             <h3 className="text-sm text-[var(--color-text)] font-semibold mb-4">
               Select Product Types
             </h3>
-
-            <FloatingLabelInput
-              type="text"
-              name={`search`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={`Search items`}
-            />
-
+            <div className="mb-5">
+              <FloatingLabelInput
+                type="text"
+                name="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search items"
+              />
+            </div>
             <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
               {filteredProductOptions.map((option) => (
                 <button
@@ -348,16 +303,12 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
 interface AboutTabProps {
   aboutUs: AboutUs;
   setAboutUs: React.Dispatch<React.SetStateAction<AboutUs>>;
-  aboutImages: Image[];
+  aboutImages: (File | string)[];
   handleImageUpload: (
-    event: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<Image[]>>
+    e: React.ChangeEvent<HTMLInputElement>,
+    index?: number
   ) => void;
-  removeImage: (
-    id: number,
-    setter: React.Dispatch<React.SetStateAction<Image[]>>
-  ) => void;
-  setAboutImages: React.Dispatch<React.SetStateAction<Image[]>>;
+  removeImage: (index: number) => void;
 }
 
 const AboutTab: React.FC<AboutTabProps> = ({
@@ -366,7 +317,6 @@ const AboutTab: React.FC<AboutTabProps> = ({
   aboutImages,
   handleImageUpload,
   removeImage,
-  setAboutImages,
 }) => (
   <div className="space-y-8">
     <FloatingLabelTextarea
@@ -382,19 +332,22 @@ const AboutTab: React.FC<AboutTabProps> = ({
         Supporting Images
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        {aboutImages.map((image) => (
-          <div key={image.id} className="relative group">
+        {aboutImages.map((image, index) => (
+          <div key={index} className="relative group">
             <img
-              src={image.url}
-              alt={image.name}
-              className="w-full h-32 object-cover rounded-lg border border-[var(--color-border)]"
+              src={
+                typeof image === "string" ? image : URL.createObjectURL(image)
+              }
+              alt={`Store image ${index + 1}`}
+              className="w-full h-32 object-cover rounded-lg border border-[var(--color-border)] cursor-pointer"
+              onClick={() => {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = "image/*";
+                input.onchange = (e) => handleImageUpload(e as any, index);
+                input.click();
+              }}
             />
-            <button
-              onClick={() => removeImage(image.id, setAboutImages)}
-              className="absolute -top-2 -right-2 bg-[var(--color-primary)] text-[var(--color-bg)] rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
         ))}
         {aboutImages.length < 3 && (
@@ -407,9 +360,7 @@ const AboutTab: React.FC<AboutTabProps> = ({
               type="file"
               multiple
               accept="image/*"
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleImageUpload(e, setAboutImages)
-              }
+              onChange={(e) => handleImageUpload(e)}
               className="hidden"
             />
           </label>
@@ -487,67 +438,117 @@ const ExtraTab: React.FC<ExtraTabProps> = ({ extraInfo, setExtraInfo }) => (
 );
 
 interface FaqsTabProps {
-  faqs: FAQ[];
-  addFaq: () => void;
-  updateFaq: (id: number, field: "question" | "answer", value: string) => void;
-  removeFaq: (id: number) => void;
+  faqs: StoreFAQ[];
+  localFaqs: LocalFAQ[];
+  setLocalFaqs: React.Dispatch<React.SetStateAction<LocalFAQ[]>>;
+  updateFaq: (
+    id: number | string,
+    field: "question" | "answer",
+    value: string,
+    isLocal?: boolean
+  ) => void;
+  removeFaq: (id: number | string, isLocal?: boolean) => Promise<void>;
+  addLocalFaq: () => void;
 }
 
 const FaqsTab: React.FC<FaqsTabProps> = ({
   faqs,
-  addFaq,
+  localFaqs,
+  setLocalFaqs,
   updateFaq,
   removeFaq,
+  addLocalFaq,
 }) => (
   <div className="space-y-6">
     <button
-      onClick={addFaq}
+      onClick={addLocalFaq}
       className="flex items-center gap-2 font-medium text-sm px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg"
     >
       <Plus className="w-4 h-4" />
       Add FAQ
     </button>
-    {faqs.map((faq) => (
-      <div
-        key={faq.id}
-        className="border border-[var(--color-border)] rounded-lg p-4 space-y-4"
-      >
-        <FloatingLabelInput
-          type="text"
-          value={faq.question}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            updateFaq(faq.id, "question", e.target.value)
-          }
-          placeholder="Question"
-        />
-        <FloatingLabelTextarea
-          value={faq.answer}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-            updateFaq(faq.id, "answer", e.target.value)
-          }
-          placeholder="Answer"
-        />
-        <button
-          onClick={() => removeFaq(faq.id)}
-          className="flex items-center gap-2 text-red-500"
-        >
-          <Trash className="w-4 h-4" />
-          Remove
-        </button>
+    {faqs.length > 0 || localFaqs.length > 0 ? (
+      <>
+        {faqs.map((faq) => (
+          <div
+            key={faq.id}
+            className="border border-[var(--color-border)] rounded-lg p-4 space-y-4"
+          >
+            <FloatingLabelInput
+              type="text"
+              name="question"
+              value={faq.question}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateFaq(faq.id, "question", e.target.value)
+              }
+              placeholder="Question"
+            />
+            <FloatingLabelTextarea
+              name="answer"
+              value={faq.answer}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                updateFaq(faq.id, "answer", e.target.value)
+              }
+              placeholder="Answer"
+            />
+            <button
+              onClick={() => removeFaq(faq.id)}
+              className="flex items-center gap-2 text-red-500"
+            >
+              <Trash className="w-4 h-4" />
+              Remove
+            </button>
+          </div>
+        ))}
+        {localFaqs.map((faq) => (
+          <div
+            key={faq.tempId}
+            className="border border-[var(--color-border)] rounded-lg p-4 space-y-4"
+          >
+            <FloatingLabelInput
+              type="text"
+              name="question"
+              value={faq.question}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateFaq(faq.tempId, "question", e.target.value, true)
+              }
+              placeholder="Question"
+            />
+            <FloatingLabelTextarea
+              name="answer"
+              value={faq.answer}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                updateFaq(faq.tempId, "answer", e.target.value, true)
+              }
+              placeholder="Answer"
+            />
+            <button
+              onClick={() => removeFaq(faq.tempId, true)}
+              className="flex items-center gap-2 text-red-500"
+            >
+              <Trash className="w-4 h-4" />
+              Remove
+            </button>
+          </div>
+        ))}
+      </>
+    ) : (
+      <div className="text-center text-[var(--color-text-muted)]">
+        <p>No FAQs yet. Click "Add FAQ" to create one.</p>
       </div>
-    ))}
+    )}
   </div>
 );
 
 // --- Main Component ---
 const Main: React.FC = () => {
+  const { isAuthenticated, accessToken, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("activeTab") || "basic";
     }
     return "basic";
   });
-
   const [basicDetails, setBasicDetails] = useState<BasicDetails>({
     phone: "",
     name: "",
@@ -564,7 +565,7 @@ const Main: React.FC = () => {
   const [isProductModalOpen, setIsProductModalOpen] = useState<boolean>(false);
   const [tempProductTypes, setTempProductTypes] = useState<string[]>([]);
   const [aboutUs, setAboutUs] = useState<AboutUs>({ story: "" });
-  const [aboutImages, setAboutImages] = useState<Image[]>([]);
+  const [aboutImages, setAboutImages] = useState<(File | string)[]>([]);
   const [socialLinks, setSocialLinks] = useState<SocialLinks>({
     twitter: "",
     facebook: "",
@@ -576,61 +577,366 @@ const Main: React.FC = () => {
     deliveryTime: "",
     policy: "",
   });
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [faqs, setFaqs] = useState<StoreFAQ[]>([]);
+  const [localFaqs, setLocalFaqs] = useState<LocalFAQ[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // --- Initialize component ---
   useEffect(() => {
-    localStorage.setItem("activeTab", activeTab);
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // --- Update API client token ---
+  useEffect(() => {
+    if (accessToken) {
+      apiClient.setAccessToken(accessToken);
+    }
+  }, [accessToken]);
+
+  // --- Save active tab to localStorage ---
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("activeTab", activeTab);
+    }
   }, [activeTab]);
 
-  const handleImageUpload = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<Image[]>>
-  ) => {
-    const files = Array.from(event.target.files || []);
-    if (setter === setAboutImages && aboutImages.length + files.length <= 3) {
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (e: ProgressEvent<FileReader>) => {
-          if (e.target?.result) {
-            setter((prev) => [
-              ...prev,
-              {
-                id: Date.now() + Math.random(),
-                url: e.target.result as string,
-                name: file.name,
-              },
-            ]);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+  // --- Check authentication ---
+  useEffect(() => {
+    if (isInitialized && !isAuthenticated) {
+      setError("Please log in to access this page.");
+      setLoading(false);
     }
-  };
+  }, [isInitialized, isAuthenticated]);
 
-  const removeImage = (
-    id: number,
-    setter: React.Dispatch<React.SetStateAction<Image[]>>
+  // --- Load store + FAQs ---
+  useEffect(() => {
+    if (!isInitialized || !isAuthenticated) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const store = await apiClient.getStore();
+        setBasicDetails({
+          name: store.name || "",
+          phone: store.phone || "",
+          description: store.description || "",
+        });
+        setLocationDetails({
+          country: store.country || "",
+          state: store.state || "",
+          address: store.address || "",
+          delivery: store.delivery || "",
+        });
+        setBusinessCategory(store.business_category || "");
+        setProductTypes(store.product_types || []);
+        setAboutUs({ story: store.story || "" });
+        setSocialLinks({
+          twitter: store.twitter || "",
+          facebook: store.facebook || "",
+          tiktok: store.tiktok || "",
+          snapchat: store.snapchat || "",
+          instagram: store.instagram || "",
+        });
+        setExtraInfo({
+          deliveryTime: store.delivery_time || "",
+          policy: store.policy || "",
+        });
+        const images = [
+          store.image_one,
+          store.image_two,
+          store.image_three,
+        ].filter((img): img is string => !!img);
+        setAboutImages(images);
+        const faqData = await apiClient.getFAQs();
+        setFaqs(faqData);
+      } catch (err: any) {
+        console.error("Failed to fetch store:", err);
+        setError(err.message || "Failed to fetch store data");
+        if (err.status === 401) {
+          setError("Session expired. Please log in again.");
+          logout();
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [isInitialized, isAuthenticated, logout]);
+
+  // --- Image upload handler ---
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index?: number
   ) => {
-    setter((prev) => prev.filter((img) => img.id !== id));
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setAboutImages((prev) => {
+      if (index !== undefined) {
+        const newImages = [...prev];
+        newImages[index] = files[0];
+        return newImages;
+      } else {
+        return [...prev, ...files].slice(0, 3);
+      }
+    });
   };
 
-  const addFaq = () => {
-    setFaqs((prev) => [...prev, { id: Date.now(), question: "", answer: "" }]);
+  const removeImage = (index: number) => {
+    setAboutImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // --- FAQ handlers ---
+  const addLocalFaq = () => {
+    const newFaq: LocalFAQ = {
+      tempId: `temp-${Date.now()}-${Math.random()}`,
+      question: "",
+      answer: "",
+    };
+    setLocalFaqs((prev) => [...prev, newFaq]);
   };
 
   const updateFaq = (
-    id: number,
+    id: number | string,
     field: "question" | "answer",
-    value: string
+    value: string,
+    isLocal: boolean = false
   ) => {
-    setFaqs((prev) =>
-      prev.map((faq) => (faq.id === id ? { ...faq, [field]: value } : faq))
-    );
+    if (isLocal) {
+      setLocalFaqs((prev) =>
+        prev.map((faq) =>
+          faq.tempId === id ? { ...faq, [field]: value } : faq
+        )
+      );
+    } else {
+      setFaqs((prev) =>
+        prev.map((faq) => (faq.id === id ? { ...faq, [field]: value } : faq))
+      );
+    }
   };
 
-  const removeFaq = (id: number) => {
-    setFaqs((prev) => prev.filter((faq) => faq.id !== id));
+  const removeFaq = async (id: number | string, isLocal: boolean = false) => {
+    if (!isAuthenticated || !accessToken) {
+      setError("Authentication failed. Please log in again.");
+      logout();
+      return;
+    }
+
+    if (isLocal) {
+      setLocalFaqs((prev) => prev.filter((faq) => faq.tempId !== id));
+    } else {
+      try {
+        await apiClient.deleteFAQ(id as number);
+        setFaqs((prev) => prev.filter((f) => f.id !== id));
+      } catch (err: any) {
+        console.error("Failed to delete FAQ:", err);
+        setError(err.message || "Failed to delete FAQ");
+        if (err.status === 401) {
+          setError("Session expired. Please log in again.");
+          logout();
+        }
+      }
+    }
   };
+
+  // --- Save / update store and FAQs ---
+  const handleSave = async () => {
+    if (!isAuthenticated || !accessToken) {
+      setError("Authentication failed. Please log in again.");
+      logout();
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Update existing FAQs
+      for (const faq of faqs) {
+        if (faq.question || faq.answer) {
+          await apiClient.updateFAQ(faq.id, {
+            question: faq.question,
+            answer: faq.answer,
+          });
+        }
+      }
+
+      // Create new FAQs
+      for (const localFaq of localFaqs) {
+        if (localFaq.question || localFaq.answer) {
+          const newFaq = await apiClient.addFAQ(
+            localFaq.question,
+            localFaq.answer
+          );
+          setFaqs((prev) => [...prev, newFaq]);
+        }
+      }
+      setLocalFaqs([]); // Clear local FAQs after saving
+
+      // Update store
+      const formData = new FormData();
+      formData.append("name", basicDetails.name);
+      formData.append("phone", basicDetails.phone);
+      formData.append("description", basicDetails.description);
+      formData.append("country", locationDetails.country);
+      formData.append("state", locationDetails.state);
+      formData.append("address", locationDetails.address);
+      formData.append("delivery", locationDetails.delivery);
+      formData.append("business_category", businessCategory);
+      formData.append("product_types", JSON.stringify(productTypes));
+      formData.append("story", aboutUs.story);
+      const imgKeys = ["image_one", "image_two", "image_three"];
+      aboutImages.forEach((image, idx) => {
+        if (image instanceof File) {
+          formData.append(imgKeys[idx], image);
+        }
+      });
+      formData.append("twitter", socialLinks.twitter);
+      formData.append("facebook", socialLinks.facebook);
+      formData.append("tiktok", socialLinks.tiktok);
+      formData.append("snapchat", socialLinks.snapchat);
+      formData.append("instagram", socialLinks.instagram);
+      formData.append("delivery_time", extraInfo.deliveryTime);
+      formData.append("policy", extraInfo.policy);
+
+      await apiClient.updateStoreWithImages(formData);
+
+      // Refresh images and FAQs from server
+      const store = await apiClient.getStore();
+      const images = [
+        store.image_one,
+        store.image_two,
+        store.image_three,
+      ].filter((img): img is string => !!img);
+      setAboutImages(images);
+      const faqData = await apiClient.getFAQs();
+      setFaqs(faqData);
+
+      alert("Store and FAQs updated successfully!");
+    } catch (err: any) {
+      console.error("Update failed:", err);
+      setError(err.message || "Failed to update store or FAQs");
+      if (err.status === 401) {
+        setError("Session expired. Please log in again.");
+        logout();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)] mx-auto mb-4"></div>
+          <p>Initializing...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">
+            {error || "Please log in to access this page."}
+          </p>
+          <button
+            onClick={() => (window.location.href = "/login")}
+            className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)] mx-auto mb-4"></div>
+          <p>Loading data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Error: {error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              const fetchData = async () => {
+                try {
+                  const store = await apiClient.getStore();
+                  setBasicDetails({
+                    name: store.name || "",
+                    phone: store.phone || "",
+                    description: store.description || "",
+                  });
+                  setLocationDetails({
+                    country: store.country || "",
+                    state: store.state || "",
+                    address: store.address || "",
+                    delivery: store.delivery || "",
+                  });
+                  setBusinessCategory(store.business_category || "");
+                  setProductTypes(store.product_types || []);
+                  setAboutUs({ story: store.story || "" });
+                  setSocialLinks({
+                    twitter: store.twitter || "",
+                    facebook: store.facebook || "",
+                    tiktok: store.tiktok || "",
+                    snapchat: store.snapchat || "",
+                    instagram: store.instagram || "",
+                  });
+                  setExtraInfo({
+                    deliveryTime: store.delivery_time || "",
+                    policy: store.policy || "",
+                  });
+                  const images = [
+                    store.image_one,
+                    store.image_two,
+                    store.image_three,
+                  ].filter((img): img is string => !!img);
+                  setAboutImages(images);
+                  const faqData = await apiClient.getFAQs();
+                  setFaqs(faqData);
+                } catch (err: any) {
+                  setError(err.message || "Failed to fetch store data");
+                  if (err.status === 401) {
+                    setError("Session expired. Please log in again.");
+                    logout();
+                  }
+                } finally {
+                  setLoading(false);
+                }
+              };
+              fetchData();
+            }}
+            className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
@@ -686,7 +992,6 @@ const Main: React.FC = () => {
                 aboutImages={aboutImages}
                 handleImageUpload={handleImageUpload}
                 removeImage={removeImage}
-                setAboutImages={setAboutImages}
               />
             )}
             {activeTab === "social" && (
@@ -701,9 +1006,11 @@ const Main: React.FC = () => {
             {activeTab === "faqs" && (
               <FaqsTab
                 faqs={faqs}
-                addFaq={addFaq}
+                localFaqs={localFaqs}
+                setLocalFaqs={setLocalFaqs}
                 updateFaq={updateFaq}
                 removeFaq={removeFaq}
+                addLocalFaq={addLocalFaq}
               />
             )}
           </div>
@@ -713,8 +1020,12 @@ const Main: React.FC = () => {
           <button className="px-6 py-3 border border-[var(--color-border)] text-[var(--color-text)] rounded-lg font-medium hover:bg-[var(--color-bg-secondary)] transition-colors">
             Cancel
           </button>
-          <button className="px-6 py-3 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:bg-[var(--color-primary-hover)] transition-colors">
-            Update Details
+          <button
+            disabled={loading}
+            onClick={handleSave}
+            className="px-6 py-3 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50"
+          >
+            {loading ? "Saving..." : "Update Details"}
           </button>
         </div>
       </div>

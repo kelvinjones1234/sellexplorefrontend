@@ -1,16 +1,19 @@
 import { API_BASE } from "@/constant/baseUrl";
-import {
-  ErrorResponse,
-  Product,
-  ProductOption,
-  CategoryResponse,
-} from "./types";
+import { ErrorResponse } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || API_BASE;
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
 
 type TokenChangeListener = (token: string | null) => void;
 
 class APIClient {
+
   private accessToken: string | null = null;
   private static instance: APIClient;
   private tokenChangeListeners: Set<TokenChangeListener> = new Set();
@@ -166,108 +169,55 @@ class APIClient {
     }
   }
 
-  // --- Product API methods ---
-
-  async postProduct(product: Product): Promise<Product> {
-    const formData = new FormData();
-
-    // Basic product fields
-    formData.append("name", product.details.name);
-    formData.append("category", product.details.category);
-    formData.append("description", product.details.description);
-    formData.append("price", product.details.price);
-    if (product.details.discountPrice) {
-      formData.append("discount_price", product.details.discountPrice);
-    }
-    formData.append("quantity", product.details.quantity);
-    formData.append(
-      "availability",
-      product.details.availability ? "true" : "false"
-    );
-    formData.append("featured", product.details.featured ? "true" : "false");
-    formData.append("recent", product.details.recent ? "true" : "false");
-    formData.append("hot_deal", product.details.hot_deal ? "true" : "false");
-    formData.append("extra_info", product.details.extraInfo);
-
-    // Images
-    product.images.forEach((img, idx) => {
-      if (img.file) {
-        formData.append(`images[${idx}][image]`, img.file);
-        formData.append(
-          `images[${idx}][is_thumbnail]`,
-          idx === product.thumbnailIndex ? "true" : "false"
-        );
-      }
-    });
-
-    // Options
-    if (product.details.options && Array.isArray(product.details.options)) {
-      product.details.options.forEach((opt: ProductOption, idx: number) => {
-        formData.append(`options[${idx}][name]`, opt.name);
-        if (opt.image) {
-          formData.append(`options[${idx}][image]`, opt.image);
-        }
-      });
-    }
-
-    const response = await this.fetchWithTimeout(`${API_BASE_URL}/products/`, {
-      method: "POST",
-      body: formData,
-      headers: this.accessToken
-        ? { Authorization: `Bearer ${this.accessToken}` }
-        : {},
-    });
-
-    return this.handleResponse<Product>(response, "Failed to create product");
-  }
-
-  // --- Category API methods ---
-  async getCategories(): Promise<CategoryResponse[]> {
+  // --- Configurations API methods ---
+  async getConfiguration(): Promise<any> {
     const response = await this.fetchWithTimeout(
-      `${API_BASE_URL}/categories/`,
-      { method: "GET" }
-    );
-
-    return this.handleResponse<CategoryResponse[]>(
-      response,
-      "Failed to fetch categories"
-    );
-  }
-
-  async postCategory(
-    name: string,
-    image: File | null
-  ): Promise<CategoryResponse> {
-    const formData = new FormData();
-    formData.append("name", name);
-    if (image) {
-      formData.append("image", image);
-    }
-
-    const response = await this.fetchWithTimeout(
-      `${API_BASE_URL}/categories/`,
+      `${API_BASE_URL}/configurations/`,
       {
-        method: "POST",
-        body: formData,
+        method: "GET",
         headers: this.accessToken
           ? { Authorization: `Bearer ${this.accessToken}` }
           : {},
       }
     );
 
-    return this.handleResponse<CategoryResponse>(
-      response,
-      "Failed to create category"
-    );
+    return this.handleResponse<any>(response, "Failed to fetch configuration");
   }
 
-  /**
-   * Check if the client has a valid token
-   */
-  isAuthenticated(): boolean {
-    return Boolean(this.accessToken);
+  async updateConfiguration(
+    data: FormData | Record<string, any>
+  ): Promise<any> {
+    let body: BodyInit;
+    let headers: HeadersInit = {};
+
+    console.log("config", data)
+
+    if (data instanceof FormData) {
+      body = data;
+      if (this.accessToken) {
+        headers = { Authorization: `Bearer ${this.accessToken}` };
+      }
+    } else {
+      body = JSON.stringify(data);
+      headers = {
+        "Content-Type": "application/json",
+        ...(this.accessToken
+          ? { Authorization: `Bearer ${this.accessToken}` }
+          : {}),
+      };
+    }
+
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/configurations/`,
+      {
+        method: "PUT",
+        body,
+        headers,
+      }
+    );
+
+    return this.handleResponse<any>(response, "Failed to update configuration");
   }
 }
 
-// Export singleton instance
 export const apiClient = APIClient.getInstance();

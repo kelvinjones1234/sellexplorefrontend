@@ -37,7 +37,8 @@ export function middleware(req: NextRequest) {
   const isMainDomain = cleanedHost === baseDomain || !subdomain;
 
   if (!isMainDomain) {
-    url.pathname = `/vendor/${subdomain}${url.pathname}`;
+    url.pathname = `/${subdomain}${url.pathname}`;
+    // url.pathname = `/${subdomain}${url.pathname}`;
     return NextResponse.rewrite(url);
   }
 

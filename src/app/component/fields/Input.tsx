@@ -43,7 +43,7 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           disabled={disabled}
-          className={`block w-full h-[3.2rem] pt-6 px-4 pb-2 bg-transparent rounded-2xl outline-none transition-all ${
+          className={`block w-full h-[3rem] pt-6 px-4 pb-2 bg-transparent rounded-2xl outline-none transition-all ${
             disabled ? "opacity-70" : ""
           }`}
         />

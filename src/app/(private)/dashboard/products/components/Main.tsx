@@ -15,17 +15,11 @@ import FloatingLabelInput from "@/app/component/fields/Input";
 import CategoryManager from "./CategoryManager";
 import { useAuth } from "@/context/AuthContext";
 import { apiClient } from "../api";
-import { Product, Category } from "../types";
+import { Product, Category, ProductImage } from "../types";
 import ProductDeleteModal from "./DeleteProductModal";
 import EditProductModal from "./EditProductModal";
 import ProductActions from "./ProductActions";
-
-interface ProductImage {
-  id: number;
-  image: string;
-  is_thumbnail: boolean;
-}
-
+ 
 const Main = () => {
   const { isAuthenticated, accessToken, logout } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -71,6 +65,7 @@ const Main = () => {
     setError(null);
 
     try {
+      // --- 1. Update core product fields ---
       const formData = new FormData();
       formData.append("name", updatedProduct.name);
       formData.append("description", updatedProduct.description);
@@ -84,43 +79,60 @@ const Main = () => {
       if (updatedProduct.category)
         formData.append("category", updatedProduct.category.toString());
 
-      updatedProduct.images.forEach((img, idx) => {
-        if (img.file) {
-          formData.append(`images[${idx}]`, img.file);
-        } else if (img.url) {
-          formData.append(`images[${idx}][url]`, img.url);
-        }
-        formData.append(
-          `images[${idx}][is_thumbnail]`,
-          idx === updatedProduct.thumbnailIndex ? "true" : "false"
-        );
-      });
-
-      updatedProduct.options.forEach((opt, idx) => {
-        formData.append(`options[${idx}][name]`, opt.name);
-        if (opt.image instanceof File) {
-          formData.append(`options[${idx}][image]`, opt.image);
-        } else if (opt.image) {
-          formData.append(`options[${idx}][image_url]`, opt.image);
-        }
-      });
-
-      const response = await apiClient.updateProduct(
+      const updatedCore = await apiClient.updateProduct(
         updatedProduct.id,
         formData
       );
-      setProducts((prev) =>
-        prev.map((p) => (p.id === updatedProduct.id ? response : p))
-      );
+
+      // --- 2. Handle new image creation ---
+      const imagesFormData = new FormData();
+      const imagesData: any[] = [];
+      let newImageFileIndex = 0;
+
+      // Process new images
+      updatedProduct.images.forEach((img, idx) => {
+        if (img.isNew && img.file) {
+          imagesData.push({
+            is_thumbnail: idx === updatedProduct.thumbnailIndex,
+            file_index: newImageFileIndex,
+          });
+          imagesFormData.append(`image_files_${newImageFileIndex}`, img.file);
+          newImageFileIndex++;
+        }
+      });
+
+      // Add new images if there are any
+      if (imagesData.length > 0) {
+        imagesFormData.append("images", JSON.stringify(imagesData));
+        await apiClient.updateProductImages(updatedCore.id, imagesFormData);
+      }
+
+      // --- 3. CRITICAL: Fetch the complete updated product data from server ---
+      const completeUpdatedProduct = await apiClient.getProduct(updatedCore.id);
+
+      // --- 4. Clean up any preview URLs to prevent memory leaks ---
+      updatedProduct.images.forEach((img) => {
+        if (img.preview && img.preview.startsWith("blob:")) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+
+      // --- 5. Update state with complete server data ---
+      setProducts((prev) => {
+        return prev.map((p) =>
+          p.id === completeUpdatedProduct.id ? completeUpdatedProduct : p
+        );
+      });
+
       setIsEditModalOpen(false);
       setProductToEdit(null);
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Failed to update product. Please try again.";
+          : "Failed to save product. Please try again.";
       setError(errorMessage);
-      console.error("Error updating product:", err);
+      console.error("Error saving product:", err);
     } finally {
       setIsSaving(false);
     }
@@ -296,7 +308,7 @@ const Main = () => {
   const getThumbnail = (images: ProductImage[]): string | null => {
     if (!images || images.length === 0) return null;
     const thumbnail = images.find((img) => img.is_thumbnail);
-    return thumbnail ? thumbnail.image : images[0].image;
+    return thumbnail ? thumbnail.image : images[0]?.image || null;
   };
 
   const currentPage = selectedTab === "products" ? productPage : categoryPage;

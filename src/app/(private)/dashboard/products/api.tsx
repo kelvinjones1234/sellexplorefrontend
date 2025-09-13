@@ -371,11 +371,6 @@ class APIClient {
   }
 
   async updateProduct(id: number | string, data: FormData): Promise<Product> {
-    console.log("FormData contents:");
-    for (let [key, value] of data.entries()) {
-        console.log(key, value);
-    }
-    
     const response = await this.fetchWithTimeout(
       `${API_BASE_URL}/products/${id}/`,
       {
@@ -386,9 +381,117 @@ class APIClient {
           : {},
       }
     );
-
     return this.handleResponse<Product>(response, "Failed to update product");
-}
+  }
+
+  async updateProductImages(
+    productId: number,
+    imagesFormData: FormData
+  ): Promise<any[]> {
+    console.log(`FormData entry: ${imagesFormData}`);
+
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/products/${productId}/images/update/`,
+      {
+        method: "POST",
+        body: imagesFormData,
+        headers: this.accessToken
+          ? { Authorization: `Bearer ${this.accessToken}` }
+          : {},
+      }
+    );
+    return this.handleResponse<any[]>(
+      response,
+      "Failed to update product images"
+    );
+  }
+
+  async deleteProductImage(imageId: number): Promise<void> {
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/products/images/${imageId}/`,
+      { method: "DELETE" }
+    );
+
+    if (!response.ok) {
+      let errorMessage = "Failed to delete image";
+      try {
+        const errorData = await response.json();
+        if (errorData.detail || errorData.message) {
+          errorMessage = errorData.detail || errorData.message;
+        }
+      } catch {
+        // Use default error message if parsing fails
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
+  async setProductThumbnail(productId: number, imageId: number): Promise<void> {
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/products/${productId}/images/${imageId}/`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_thumbnail: true }),
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage = "Failed to update thumbnail";
+      try {
+        const errorData = await response.json();
+        if (errorData.detail || errorData.message) {
+          errorMessage = errorData.detail || errorData.message;
+        }
+      } catch {
+        // Use default error message if parsing fails
+      }
+      throw new Error(errorMessage);
+    }
+  }
+ 
+  async updateProductOptions(
+    productId: number,
+    optionsFormData: FormData
+  ): Promise<any[]> {
+    console.log("Options FormData contents:");
+    for (let [key, value] of optionsFormData.entries()) {
+      console.log(`FormData entry: ${key} = ${value}`);
+    }
+
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/products/${productId}/options/update/`,
+      {
+        method: "PUT",
+        body: optionsFormData,
+        headers: this.accessToken
+          ? { Authorization: `Bearer ${this.accessToken}` }
+          : {},
+      }
+    );
+    return this.handleResponse<any[]>(
+      response,
+      "Failed to update product options"
+    );
+  }
+
+  // Add this method to your apiClient class/object
+
+  async getProduct(productId: number): Promise<Product> {
+    const response = await fetch(`${API_BASE_URL}/products/${productId}/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch product: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
 
   /**
    * Check if the client has a valid token

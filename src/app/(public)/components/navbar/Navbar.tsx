@@ -21,7 +21,7 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] backdrop-blur-sm rounded-full max-w-[1200px] mx-auto">
+      <header className="w-full bg-[var(--color-bg-secondary)] rounded-full max-w-[1200px] mx-auto">
         <div className="py-2 sm:py-4 md:py-6 container-padding">
           <DesktopNavbar
             theme={theme ?? "system"} // ✅ pass theme safely

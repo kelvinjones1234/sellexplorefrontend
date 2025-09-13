@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -85,6 +83,9 @@ const Main = () => {
           quantity: "",
           discountPrice: "",
           availability: true,
+          hot_deal: false,
+          recent: false,
+          featured: false,
           extraInfo: "",
           options: [],
         },
@@ -725,6 +726,86 @@ const DetailsView = ({
           </button>
           {isExtraOpen && (
             <div className="py-4">
+              <div className="flex justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-[var(--color-text)]">
+                    Recent
+                  </label>
+                  <button
+                    onClick={() =>
+                      updateDetail(
+                        "recent",
+                        !currentProduct.details.recent
+                      )
+                    }
+                    className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
+                      currentProduct.details.recent
+                        ? "bg-[var(--color-primary)]"
+                        : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${
+                        currentProduct.details.recent
+                          ? "translate-x-6"
+                          : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-[var(--color-text)]">
+                    Hot deal
+                  </label>
+                  <button
+                    onClick={() =>
+                      updateDetail(
+                        "hot_deal",
+                        !currentProduct.details.hot_deal
+                      )
+                    }
+                    className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
+                      currentProduct.details.hot_deal
+                        ? "bg-[var(--color-primary)]"
+                        : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${
+                        currentProduct.details.hot_deal
+                          ? "translate-x-6"
+                          : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-[var(--color-text)]">
+                    Featured
+                  </label>
+                  <button
+                    onClick={() =>
+                      updateDetail(
+                        "featured",
+                        !currentProduct.details.featured
+                      )
+                    }
+                    className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
+                      currentProduct.details.featured
+                        ? "bg-[var(--color-primary)]"
+                        : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${
+                        currentProduct.details.featured
+                          ? "translate-x-6"
+                          : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
               <FloatingLabelTextarea
                 placeholder="Optional Product Settings"
                 value={currentProduct.details.extraInfo}

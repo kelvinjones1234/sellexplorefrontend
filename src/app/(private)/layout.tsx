@@ -1,7 +1,8 @@
 import ProtectedRoute from "../utils/PrivateRoute";
 import DashboardNavbar from "./components/navbar/DashboardNavbar";
 import Sidebar from "./components/DesktopSidebar";
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 export default function PrivateLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -19,6 +20,18 @@ export default function PrivateLayout({
           <hr className="border-[var(--color-border)]" />
           <div className="overflow-y-auto">{children}</div>
         </main>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+        />
       </div>
     </ProtectedRoute>
   );

@@ -33,6 +33,9 @@ export interface ProductDetails {
   discountPrice?: string; // Optional, string in frontend
   quantity: string; // String in frontend, converted to number
   availability: boolean; // Changed to match backend
+  hot_deal: boolean; // Changed to match backend
+  recent: boolean; // Changed to match backend
+  featured: boolean; // Changed to match backend
   extraInfo: string;
   options: ProductOption[]; // Correct type
 }

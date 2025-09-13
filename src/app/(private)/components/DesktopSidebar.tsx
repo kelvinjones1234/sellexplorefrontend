@@ -168,7 +168,7 @@ const Sidebar = () => {
         </div>
       </nav>
 
-      <div className="mt-8 mr-3 fixed bottom-0 w-[20%] my-4 px-4">
+      <div className="mt-8 mr-3 fixed bottom-0 w-[300px] my-4 px-4">
         <LogoutButton />
       </div>
     </div>

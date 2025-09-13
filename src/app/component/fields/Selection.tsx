@@ -30,7 +30,7 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
   const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <div className={`relative mb-3 ${margin || ""}`}>
+    <div className={`relative mb- ${margin || ""}`}>
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
       <div
         className={`relative border rounded-2xl ${
@@ -49,7 +49,7 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           disabled={disabled}
-          className={`block w-full h-[3.2rem] pt-6 pl-4 pr-10 pb-2 bg-transparent rounded-2xl outline-none appearance-none ${
+          className={`block w-full h-[3rem] pt-6 pl-4 pr-10 pb-2 bg-transparent rounded-2xl outline-none appearance-none ${
             disabled ? "opacity-70" : ""
           }`}
         >
