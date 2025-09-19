@@ -21,8 +21,12 @@ export function getStoreNameFromHost(host?: string): string | null {
 
   // Skip "www"
   if (firstPart === "www") {
-    firstPart = parts.length > 1 ? parts[1].toLowerCase() : null;
+    if (parts.length > 1) {
+      firstPart = parts[1].toLowerCase();
+    } else {
+      return null; // no usable subdomain
+    }
   }
 
-  return firstPart || null;
+  return firstPart;
 }

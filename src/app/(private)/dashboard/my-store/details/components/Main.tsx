@@ -136,10 +136,10 @@ const LocationTab: React.FC<LocationTabProps> = ({
     <FloatingLabelSelect
       name="country"
       value={locationDetails.country}
-      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+      onChange={(value) =>
         setLocationDetails((prev) => ({
           ...prev,
-          country: e.target.value,
+          country: value as string, // cast if needed
           state: "",
         }))
       }
@@ -149,8 +149,11 @@ const LocationTab: React.FC<LocationTabProps> = ({
     <FloatingLabelSelect
       name="state"
       value={locationDetails.state}
-      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-        setLocationDetails((prev) => ({ ...prev, state: e.target.value }))
+      onChange={(value) =>
+        setLocationDetails((prev) => ({
+          ...prev,
+          state: value as string,
+        }))
       }
       placeholder="State / Province"
       options={statesByCountry[locationDetails.country] || []}
@@ -217,9 +220,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
       <FloatingLabelSelect
         name="businessCategory"
         value={businessCategory}
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-          setBusinessCategory(e.target.value)
-        }
+        onChange={(value) => setBusinessCategory(value as string)}
         placeholder="Business Category"
         options={businessCategoryOptions}
       />

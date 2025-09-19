@@ -3,19 +3,19 @@ import { X, Bookmark } from "lucide-react";
 import Link from "next/link";
 import { navItems } from "@/constant/nav";
 
-interface MobileNavbarProps {
+interface MobileNavProps {
   isOpen: boolean;
   toggleMenu: () => void;
   totalItems: number;
 }
 
-const MobileNavbar: React.FC<MobileNavbarProps> = ({
+const MobileNavbar: React.FC<MobileNavProps> = ({
   isOpen,
   toggleMenu,
   totalItems,
 }) => (
   <div
-    className={`fixed inset-0 transition-all duration-300 ${
+    className={`fixed z-[999] inset-0 transition-all duration-300 ${
       isOpen ? "visible opacity-100" : "invisible opacity-0"
     }`}
   >

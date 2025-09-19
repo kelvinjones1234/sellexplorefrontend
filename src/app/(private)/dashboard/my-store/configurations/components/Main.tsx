@@ -522,7 +522,7 @@ const Main: React.FC = () => {
             ...prev,
             {
               id: Date.now() + Math.random(),
-              url: e.target.result as string,
+              url: e.target?.result as string,
               name: file.name,
             },
           ]);

@@ -1,18 +1,13 @@
 import { useState } from "react";
 
-interface FloatingLabelInputProps {
-  type: string;
-  name: string;
-  value: string | number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder: string;
-  disabled?: boolean;
+interface FloatingLabelInputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   margin?: string;
   error?: string;
 }
 
 const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
-  type,
+  type = "text",
   name,
   value,
   onChange,
@@ -20,11 +15,13 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
   disabled = false,
   margin,
   error,
+  autoFocus,
+  ...rest
 }) => {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <div className={`relative mb- ${margin || ""}`}>
+    <div className={`relative ${margin || ""}`}>
       <div
         className={`relative border rounded-2xl ${
           error
@@ -38,14 +35,16 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
           type={type}
           name={name}
           id={name}
-          value={value || ""}
+          value={value ?? ""} // ✅ handles undefined safely
           onChange={onChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           disabled={disabled}
+          autoFocus={autoFocus}
           className={`block w-full h-[3rem] pt-6 px-4 pb-2 bg-transparent rounded-2xl outline-none transition-all ${
             disabled ? "opacity-70" : ""
           }`}
+          {...rest} // ✅ allows accept, alt, capture, onKeyDown, etc.
         />
         <label
           htmlFor={name}

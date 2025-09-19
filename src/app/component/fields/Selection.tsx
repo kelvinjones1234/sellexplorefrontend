@@ -1,4 +1,7 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
 
 interface Option {
   value: string | number;
@@ -9,7 +12,7 @@ interface Option {
 interface FloatingLabelSelectProps {
   name: string;
   value: string | number;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onChange: (value: string | number) => void;
   placeholder: string;
   margin?: string;
   disabled?: boolean;
@@ -28,68 +31,102 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
   error,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const selected = options.find((opt) => opt.value === value);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <div className={`relative mb- ${margin || ""}`}>
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    <div ref={wrapperRef} className={`relative ${margin || ""}`}>
       <div
         className={`relative border rounded-2xl ${
           error
             ? "border-red-500"
-            : isFocused
+            : isFocused || open
             ? "border-[var(--color-primary)]"
             : "border-[var(--color-border)]"
         }`}
       >
-        <select
-          name={name}
-          id={name}
-          value={value || ""}
-          onChange={onChange}
+        {/* Trigger */}
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setOpen(!open)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          disabled={disabled}
-          className={`block w-full h-[3rem] pt-6 pl-4 pr-10 pb-2 bg-transparent rounded-2xl outline-none appearance-none ${
-            disabled ? "opacity-70" : ""
+          className={`block w-full h-[3rem] pt-6 pl-4 pr-10 pb-2 bg-transparent rounded-2xl text-left text-sm ${
+            disabled ? "opacity-70 cursor-not-allowed" : ""
           }`}
         >
-          <option value="" disabled></option>
-          {options.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-              disabled={option.disabled}
-            >
-              {option.label}
-            </option>
-          ))}
-        </select>
+          {selected ? (
+            <span className="text-[var(--color-body)]">{selected.label}</span>
+          ) : // ❌ REMOVE this placeholder text
+          // <span className="text-gray-400">{placeholder}</span>
+          null}
+        </button>
+
+        {/* Floating label */}
         <label
           htmlFor={name}
-          className={`absolute duration-300 transform ${
-            isFocused || value
-              ? "text-xs top-3 scale-75 -translate-y-1 z-10"
-              : "text-[.9rem] top-1/2 -translate-y-1/2"
-          } left-4 origin-[0] pointer-events-none`}
+          className={`absolute left-4 transition-all duration-200 pointer-events-none ${
+            isFocused || selected
+              ? "text-xs top-2 text-[var(--color-primary)]"
+              : "text-sm top-1/2 -translate-y-1/2 text-gray-500"
+          }`}
         >
           {placeholder}
         </label>
+
+        {/* Chevron */}
         <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-          <svg
-            className="w-5 h-5 text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          <ChevronDown
+            className={`w-5 h-5 text-gray-500 transition-transform ${
+              open ? "rotate-180" : ""
+            }`}
+          />
         </div>
+
+        {/* Dropdown menu */}
+        {open && (
+          <ul className="absolute z-20 mt-1 w-full bg-white dark:bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl shadow-lg max-h-48 overflow-y-auto">
+            {options.map((opt) => (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  disabled={opt.disabled}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-border-secondary)] ${
+                    value === opt.value
+                      ? "bg-[var(--color-primary)] text-white"
+                      : ""
+                  } ${opt.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
+
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
 };

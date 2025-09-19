@@ -144,7 +144,9 @@ const SignupFormInner: React.FC = () => {
           <FloatingLabelSelect
             name="niche"
             value={formData.niche}
-            onChange={handleChange}
+            onChange={(value) =>
+              handleChange({ target: { name: "niche", value } } as any)
+            }
             placeholder="Select a business niche"
             options={categories.map((category) => ({
               value: category.split(";")[0],
@@ -152,12 +154,13 @@ const SignupFormInner: React.FC = () => {
             }))}
             error={errors.niche}
           />
-
           {/* Location */}
-          <FloatingLabelSelect 
+          <FloatingLabelSelect
             name="location"
             value={formData.location}
-            onChange={handleChange}
+            onChange={(value) =>
+              handleChange({ target: { name: "location", value } } as any)
+            }
             placeholder="Select a location"
             options={statesInNigeria.map((state) => ({
               value: state,

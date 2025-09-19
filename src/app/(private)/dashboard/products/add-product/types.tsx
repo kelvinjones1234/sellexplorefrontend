@@ -1,5 +1,4 @@
-// category
-
+// Represents a category response from the API
 export interface CategoryResponse {
   id: string;
   name: string;
@@ -7,12 +6,13 @@ export interface CategoryResponse {
   message?: string;
 }
 
-// Error shape returned by DRF or your API
+// Represents an error response from the API (e.g., DRF)
 export interface ErrorResponse {
-  detail?: string; // common DRF error field
-  [key: string]: any; // allow other dynamic error fields
+  detail?: string;
+  [key: string]: any; // Allow dynamic error fields
 }
 
+// Represents image data for a product
 export interface ImageData {
   file: File | null;
   preview: string;
@@ -20,38 +20,57 @@ export interface ImageData {
   uploadedUrl?: string;
 }
 
-export interface ProductOption {
-  name: string;
-  image?: File;
+// Represents a note associated with a product option
+export interface OptionsNote {
+  product: string | number;
+  id: number;
+  note: string;
+  created_at: string; // ISO date string
+  updated_at: string; // ISO date string
 }
 
+// Represents a product option
+export interface ProductOption {
+  id: number;
+  product: number;
+  note: OptionsNote | null;
+  options: string[];
+  as_template: boolean;
+  template_name?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Represents product details
 export interface ProductDetails {
   name: string;
-  category: string; // Category ID or slug
+  category: string;
   description: string;
-  price: string; // String in frontend, converted to number for backend
-  discountPrice?: string; // Optional, string in frontend
-  quantity: string; // String in frontend, converted to number
-  availability: boolean; // Changed to match backend
-  hot_deal: boolean; // Changed to match backend
-  recent: boolean; // Changed to match backend
-  featured: boolean; // Changed to match backend
+  price: string;
+  discountPrice?: string;
+  quantity: string;
+  availability: boolean;
+  hot_deal: boolean;
+  recent: boolean;
+  featured: boolean;
   extraInfo: string;
-  options: ProductOption[]; // Correct type
+  options: ProductOption[]; // plural instead of singular
 }
 
+// Represents a product
 export interface Product {
   images: ImageData[];
   thumbnailIndex: number;
   details: ProductDetails;
 }
 
-// types.tsx
+// Represents an option for FancySelect component
 export interface Option<T extends React.Key = string> {
   value: T;
   label: string;
 }
 
+// Props for FancySelect component
 export interface FancySelectProps<T extends React.Key = string> {
   name: string;
   options: Option<T>[];

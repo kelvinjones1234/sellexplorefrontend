@@ -7,9 +7,10 @@ import FloatingLabelInput from "@/app/component/fields/Input";
 import { useAuth } from "@/context/AuthContext";
 import Alert from "../../components/Alert";
 
-interface CreateCategoryModalProps {
+export interface CreateCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (name: string, image: File | null) => void; // ✅ add this
 }
 
 export default function CreateCategoryModal({

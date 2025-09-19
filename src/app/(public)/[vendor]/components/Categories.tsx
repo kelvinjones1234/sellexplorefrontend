@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Category } from "../page";
+import { Category } from "../../types";
 import React from "react";
 
 export default function Categories({ categories }: { categories: Category[] }) {

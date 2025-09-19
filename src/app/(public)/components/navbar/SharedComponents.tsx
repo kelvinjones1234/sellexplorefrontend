@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Bookmark, ShoppingBagIcon } from "lucide-react";
+import { Sun, Moon, ShoppingBagIcon } from "lucide-react";
 
 interface ThemeToggleButtonProps {
   theme: string;

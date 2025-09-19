@@ -5,7 +5,7 @@ import { ChevronDown, Plus, Check, X } from "lucide-react";
 import FloatingLabelInput from "@/app/component/fields/Input";
 import FloatingLabelTextarea from "@/app/component/fields/Textarea";
 import FancySelect from "../add-product/components/FancySelect";
-import OptionModal from "./OptionModal";
+import OptionModal from "./EditOptionModal";
 import { Product, ProductOption, ProductImage, Category } from "../types";
 import { apiClient } from "../api";
 

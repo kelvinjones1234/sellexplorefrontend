@@ -1,30 +1,8 @@
 import { apiClient } from "../api";
 import Hero from "./components/Hero";
 import ItemsGroup from "./components/ItemsGroup";
-import Search from "../components/Search";
 import Featured from "./components/Featured";
 import Categories from "./components/Categories";
-
-export interface Category {
-  id: number;
-  name: string;
-  image: string | null;
-  slug: string;
-}
-
-export interface FeaturedProduct {
-  id: number;
-  name: string;
-  price: string;
-  discount_price: string | null;
-  images: { id: number; image: string; is_thumbnail: boolean }[];
-  options: any[];
-}
-
-export interface CategoriesAndFeaturedProducts {
-  featured_products: FeaturedProduct[];
-  categories: Category[];
-}
 
 interface MainPageProps {
   params: { store: string };
@@ -50,18 +28,18 @@ export default async function MainPage({ params }: MainPageProps) {
 
     console.log("For hero", configData);
     console.log("Items group", groupDataValue);
-    console.log("Featured and cat", categoriesAndFeatured);
+    console.log("Featured and cat", categoriesAndFeatured?.categories);
 
     return (
       <div>
         {configData && <Hero initialConfig={configData} />}
-        <div className="py-[1rem]">
-          <Search />
-        </div>
         <ItemsGroup initialData={groupDataValue} />
         {categoriesAndFeatured && (
           <>
-            <Featured products={categoriesAndFeatured.featured_products} />
+            <Featured
+              products={categoriesAndFeatured.featured_products}
+              categories={categoriesAndFeatured.categories}
+            />
             <Categories categories={categoriesAndFeatured.categories} />
           </>
         )}

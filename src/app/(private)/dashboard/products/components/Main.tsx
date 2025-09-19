@@ -19,7 +19,7 @@ import { Product, Category, ProductImage } from "../types";
 import ProductDeleteModal from "./DeleteProductModal";
 import EditProductModal from "./EditProductModal";
 import ProductActions from "./ProductActions";
- 
+
 const Main = () => {
   const { isAuthenticated, accessToken, logout } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -846,14 +846,6 @@ const Main = () => {
                     <button className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[var(--color-border-secondary)] rounded-lg text-sm font-medium transition-colors">
                       <Edit className="w-4 h-4" />
                       Bulk Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(selectedProducts)}
-                      disabled={selectedProducts.length === 0 || isDeleting}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete Selected ({selectedProducts.length})
                     </button>
                   </div>
                 </div>

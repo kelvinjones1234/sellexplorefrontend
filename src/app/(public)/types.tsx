@@ -1,10 +1,11 @@
+// 🔹 Error response shape
 export interface ErrorResponse {
   detail?: string;
   message?: string;
   [key: string]: any; // Allow other dynamic error fields
 }
 
-// Store configuration for theming & hero section
+// 🔹 Store configuration for theming & hero section
 export interface StoreConfig {
   title: string;
   description: string;
@@ -20,33 +21,72 @@ export interface StoreConfig {
   background_image_three?: string;
 }
 
-// Category model (used in filter dropdowns, listings)
+// 🔹 Category model
 export interface Category {
   id: number;
   name: string;
+  slug: string;
   image?: string | null;
 }
 
-// Product image details
+// 🔹 Product image details
 export interface ProductImage {
   id: number;
   image: string;
   is_thumbnail: boolean;
 }
 
-// Featured product (for homepage sections)
-export interface FeaturedProduct {
+// 🔹 Product model (base)
+export interface Product {
   id: number;
   name: string;
   price: string;
-  discount_price?: string | null;
+  discount_price?: string | null; // allow null + undefined
+  description?: string;
+  colors?: string[];
+  length?: string;
+  category?: Category;
   images: ProductImage[];
-  options: { id: number; name: string }[];
+  options?: Array<{
+    id: number;
+    name: string;
+    price: string;
+    image?: string | File;
+  }>;
 }
 
-// Product group (for grouping in ItemsGroup)
+// 🔹 Featured product = same as Product
+export type FeaturedProduct = Product;
+
+// 🔹 Product group (used in ItemsGroup or dashboard)
 export interface ProductGroupData {
   id: number;
   name: string;
-  products: FeaturedProduct[];
+  products: Product[];
+}
+
+// 🔹 Combined response for homepage (featured + categories)
+export interface CategoriesAndFeaturedProducts {
+  featured_products: Product[];
+  categories: Category[];
+}
+
+// 🔹 Generic API responses
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+export interface FilteredProductResponse<T> {
+  count: number;
+  results: T[];
+}
+
+// 🔹 Product filter query params
+export interface ProductFilters {
+  search?: string;
+  category?: string;
+  categories?: string;
 }

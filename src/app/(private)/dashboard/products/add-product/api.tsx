@@ -16,7 +16,6 @@ class APIClient {
   private tokenChangeListeners: Set<TokenChangeListener> = new Set();
 
   private constructor() {
-    // Initialize token from localStorage if available
     this.initializeToken();
   }
 
@@ -36,14 +35,10 @@ class APIClient {
     }
   }
 
-  /**
-   * Set access token and notify all listeners
-   */
   setAccessToken(token: string | null): void {
     const previousToken = this.accessToken;
     this.accessToken = token;
 
-    // Update localStorage
     if (typeof window !== "undefined") {
       if (token) {
         localStorage.setItem("access", token);
@@ -52,7 +47,6 @@ class APIClient {
       }
     }
 
-    // Notify listeners only if token actually changed
     if (previousToken !== token) {
       this.notifyTokenChangeListeners(token);
     }
@@ -62,23 +56,14 @@ class APIClient {
     return this.accessToken;
   }
 
-  /**
-   * Add listener for token changes
-   */
   addTokenChangeListener(listener: TokenChangeListener): void {
     this.tokenChangeListeners.add(listener);
   }
 
-  /**
-   * Remove listener for token changes
-   */
   removeTokenChangeListener(listener: TokenChangeListener): void {
     this.tokenChangeListeners.delete(listener);
   }
 
-  /**
-   * Notify all listeners of token changes
-   */
   private notifyTokenChangeListeners(token: string | null): void {
     this.tokenChangeListeners.forEach((listener) => {
       try {
@@ -89,9 +74,6 @@ class APIClient {
     });
   }
 
-  /**
-   * Clear all tokens and reset client state
-   */
   clearTokens(): void {
     this.setAccessToken(null);
   }
@@ -106,12 +88,10 @@ class APIClient {
 
     try {
       const headers = new Headers(options.headers);
-      // Only set JSON Content-Type if body is NOT FormData
       if (!(options.body instanceof FormData)) {
         headers.set("Content-Type", "application/json");
       }
 
-      // Add authorization header if token exists
       if (this.accessToken) {
         headers.set("Authorization", `Bearer ${this.accessToken}`);
       }
@@ -144,7 +124,6 @@ class APIClient {
           message = errorData.message;
         }
       } catch (parseError) {
-        // If JSON parsing fails, use default error message
         console.warn("Failed to parse error response:", parseError);
       }
 
@@ -153,7 +132,6 @@ class APIClient {
       throw error;
     }
 
-    // Handle no-content responses
     if (response.status === 204) {
       return {} as T;
     }
@@ -166,7 +144,7 @@ class APIClient {
     }
   }
 
-  // --- Product API methods ---
+  // api.ts
 
   async postProduct(product: Product): Promise<Product> {
     const formData = new FormData();
@@ -200,28 +178,52 @@ class APIClient {
       }
     });
 
-    // Options
-    if (product.details.options && Array.isArray(product.details.options)) {
-      product.details.options.forEach((opt: ProductOption, idx: number) => {
-        formData.append(`options[${idx}][name]`, opt.name);
-        if (opt.image) {
-          formData.append(`options[${idx}][image]`, opt.image);
+    // Options - Always include options, even if empty
+    const optionsForBackend = (product.details.options || []).map((option) => ({
+      options: option.options || [],
+      as_template: option.as_template || false,
+      template_name: option.template_name || null,
+      note: option.note ? option.note.note : null,
+    }));
+    formData.append("options", JSON.stringify(optionsForBackend));
+    console.log("FormData entries:", Object.fromEntries(formData));
+    console.log(`Product ${product.details.name} options:`, optionsForBackend);
+
+    try { 
+      const response = await this.fetchWithTimeout(
+        `${API_BASE_URL}/products/`,
+        {
+          method: "POST",
+          body: formData,
+          headers: this.accessToken
+            ? { Authorization: `Bearer ${this.accessToken}` }
+            : {},
         }
-      });
+      );
+
+      return await this.handleResponse<Product>(
+        response,
+        "Failed to create product"
+      );
+    } catch (error) {
+      console.error("Error creating product:", error);
+      throw error;
     }
-
-    const response = await this.fetchWithTimeout(`${API_BASE_URL}/products/`, {
-      method: "POST",
-      body: formData,
-      headers: this.accessToken
-        ? { Authorization: `Bearer ${this.accessToken}` }
-        : {},
-    });
-
-    return this.handleResponse<Product>(response, "Failed to create product");
   }
 
-  // --- Category API methods ---
+  async getOptionTemplates(): Promise<ProductOption[]> {
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/product-options/`,
+      {
+        method: "GET",
+      }
+    );
+    return this.handleResponse<ProductOption[]>(
+      response,
+      "Failed to fetch option templates"
+    );
+  }
+
   async getCategories(): Promise<CategoryResponse[]> {
     const response = await this.fetchWithTimeout(
       `${API_BASE_URL}/categories/`,
@@ -261,13 +263,9 @@ class APIClient {
     );
   }
 
-  /**
-   * Check if the client has a valid token
-   */
   isAuthenticated(): boolean {
     return Boolean(this.accessToken);
   }
 }
 
-// Export singleton instance
 export const apiClient = APIClient.getInstance();
