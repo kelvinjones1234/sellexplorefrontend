@@ -50,7 +50,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           isNew: false,
           toDelete: false,
         })),
-        thumbnailIndex: thumbnailIndex !== -1 ? thumbnailIndex : 0, // Default to 0 if no thumbnail
+        thumbnailIndex: thumbnailIndex !== -1 ? thumbnailIndex : 0,
         deletedImageIds: [],
       });
       setError(null);
@@ -89,7 +89,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           ...currentProduct.images.filter((img) => !img.toDelete),
           ...newImages,
         ],
-        thumbnailIndex: currentProduct.thumbnailIndex ?? 0, // Preserve or default to 0
+        thumbnailIndex: currentProduct.thumbnailIndex ?? 0,
       });
     }
   };
@@ -155,7 +155,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           ...currentProduct,
           images: updatedImages,
           thumbnailIndex: Math.min(
-            currentProduct.thumbnailIndex ?? 0, // Default to 0 if undefined
+            currentProduct.thumbnailIndex ?? 0,
             updatedImages.filter((img) => !img.toDelete).length - 1
           ),
         });
@@ -170,7 +170,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             ...currentProduct,
             images: updatedImages,
             thumbnailIndex: Math.min(
-              currentProduct.thumbnailIndex ?? 0, // Default to 0 if undefined
+              currentProduct.thumbnailIndex ?? 0,
               updatedImages.filter((img) => !img.toDelete).length - 1
             ),
             deletedImageIds: imageToDelete.id
@@ -189,21 +189,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     if (currentProduct) {
       setCurrentProduct({
         ...currentProduct,
-        options: [
-          ...currentProduct.options,
-          { ...option, id: currentProduct.options.length + 1 },
-        ],
+        options: [option], // Replace previous options with the new one
       });
     }
   };
 
   const editOption = (index: number, option: ProductOption) => {
     if (currentProduct) {
-      const updatedOptions = [...currentProduct.options];
-      updatedOptions[index] = {
-        ...option,
-        id: currentProduct.options[index].id,
-      };
+      const updatedOptions = [option]; // Replace the option at the given index
       setCurrentProduct({
         ...currentProduct,
         options: updatedOptions,
@@ -215,7 +208,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     if (currentProduct) {
       setCurrentProduct({
         ...currentProduct,
-        options: currentProduct.options.filter((_, i) => i !== index),
+        options: [],
       });
     }
   };
@@ -232,10 +225,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   };
 
   const handleSaveOption = (option: ProductOption) => {
-    if (!option.name) {
-      setError("Option name is required");
-      return;
-    }
     if (editingOptionIndex !== null) {
       editOption(editingOptionIndex, option);
     } else {
@@ -265,7 +254,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         return;
       }
       onSave(currentProduct);
-      onClose();
     }
   };
 
@@ -274,19 +262,25 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const visibleImages = currentProduct.images.filter((img) => !img.toDelete);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[var(--color-bg)] rounded-2xl shadow-xl w-11/12 max-w-md max-h-[80vh] flex flex-col animate-in fade-in-0 zoom-in-95">
-        <div className="flex-shrink-0 p-6 pb-0">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Edit Product: {currentProduct.name}
-            </h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 text-[var(--color-text-secondary)] flex items-center justify-center z-50">
+      <div className="bg-[var(--color-bg-surface)] rounded-3xl shadow-xl w-11/12 max-w-md max-h-[80vh] flex flex-col animate-in fade-in-0 zoom-in-95">
+
+
+
+        <div className="flex-shrink-0 justify-between items-center p-6 border-b border-[var(--color-border-strong)]">
+          <div className="flex justify-between items-center mb-">
+            <h2 className="text-md text-[var(--color-text-primary)]">
+              <span>
+                <strong> Product:</strong>
+              </span>{" "}
+              {currentProduct.name}
+            </h2> 
             <button
               onClick={onClose}
-              className="p-1 rounded-full hover:bg-[var(--color-border)] border border-[var(--color-border)] transition"
+              className="p-1 rounded-full hover:bg-[var(--color-bg-secondary)] border border-[var(--color-border-strong)] transition"
               aria-label="Close modal"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
           </div>
 
@@ -314,7 +308,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       alt={`Product image ${idx + 1}`}
                       className={`w-16 h-16 rounded-lg object-cover cursor-pointer border-2 ${
                         (currentProduct.thumbnailIndex ?? 0) === idx
-                          ? "border-[var(--color-primary)]"
+                          ? "border-[var(--color-brand-primary)]"
                           : "border-transparent"
                       }`}
                     />
@@ -332,14 +326,16 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     )}
 
                     {(currentProduct.thumbnailIndex ?? 0) === idx && (
-                      <div className="absolute top-1 right-1 bg-[var(--color-primary)] text-white w-4 h-4 flex items-center justify-center rounded-full text-xs">
+                      <div className="absolute top-1 right-1 bg-[var(--color-brand-primary)] text-white w-4 h-4 flex items-center justify-center rounded-full text-xs">
                         <Check className="w-3 h-3" />
                       </div>
                     )}
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-gray-500">No images available</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  No images available
+                </p>
               )}
               <button
                 onClick={() => addMoreImagesRef.current?.click()}
@@ -349,7 +345,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 <Plus className="w-6 h-6" />
               </button>
             </div>
-            <p className="text-center text-xs text-gray-500 mt-2">
+            <p className="text-center text-xs text-[var(--color-text-muted)] mt-2">
               Click on the canvas with plus sign to add more images
             </p>
             <input
@@ -394,10 +390,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 onChange={(e) => updateDetail("description", e.target.value)}
               />
 
-              <div className="py-4">
+              <div className="pt-4">
                 <button
                   onClick={() => setIsPricingOpen(!isPricingOpen)}
-                  className="w-full text-left text-sm py-3 text-[var(--color-text)] font-semibold flex justify-between items-center"
+                  className="w-full text-left text-sm py-3 text-[var(--color-text-primary)] flex justify-between items-center"
                   aria-expanded={isPricingOpen}
                   aria-controls="pricing-section"
                 >
@@ -435,7 +431,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <div>
                 <button
                   onClick={() => setIsQuantityOpen(!isQuantityOpen)}
-                  className="w-full text-left text-sm py-3 text-[var(--color-text)] font-semibold flex justify-between items-center"
+                  className="w-full text-left text-sm py-3 text-[var(--color-text-primary)] flex justify-between items-center"
                   aria-expanded={isQuantityOpen}
                   aria-controls="quantity-section"
                 >
@@ -449,7 +445,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 {isQuantityOpen && (
                   <div id="quantity-section" className="py-2">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="flex items-center gap-2 border border-[var(--color-border)] rounded-lg px-1 py-1 w-fit">
+                      <div className="flex items-center gap-2 border border-[var(--color-border-strong)] rounded-xl px-1 py-1 w-fit">
                         <button
                           onClick={() =>
                             updateDetail(
@@ -457,12 +453,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                               Math.max(0, Number(currentProduct.quantity) - 1)
                             )
                           }
-                          className="w-8 h-8 enchantica-product-modal flex items-center justify-center rounded-md bg-[var(--color-border-secondary)] hover:bg-[var(--color-border)] text-lg font-bold"
+                          className="w-8 h-8 flex items-center justify-center rounded-md bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-surface)] text-lg font-bold"
                           aria-label="Decrease quantity"
                         >
                           -
                         </button>
-                        <span className="min-w-[20px] text-xs text-center font-medium">
+                        <span className="min-w-[20px] text-xs text-center">
                           {currentProduct.quantity}
                         </span>
                         <button
@@ -472,14 +468,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                               Number(currentProduct.quantity) + 1
                             )
                           }
-                          className="w-8 h-8 flex items-center justify-center rounded-md bg-[var(--color-border-secondary)] hover:bg-[var(--color-border)] text-lg font-bold"
+                          className="w-8 h-8 flex items-center justify-center rounded-md bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-surface)] text-lg font-bold"
                           aria-label="Increase quantity"
                         >
                           +
                         </button>
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs font-medium text-[var(--color-text)]">
+                        <label className="text-xs text-[var(--color-text-primary)]">
                           Always available
                         </label>
                         <button
@@ -491,8 +487,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                           }
                           className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
                             currentProduct.availability
-                              ? "bg-[var(--color-primary)]"
-                              : "bg-gray-300"
+                              ? "bg-[var(--color-brand-primary)]"
+                              : "bg-[var(--color-bg-primary)]"
                           }`}
                           aria-label={`Toggle always available: ${
                             currentProduct.availability ? "on" : "off"
@@ -517,7 +513,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <div>
                 <button
                   onClick={() => setIsOptionsOpen(!isOptionsOpen)}
-                  className="w-full text-left text-sm py-3 text-[var(--color-text)] font-semibold flex justify-between items-center"
+                  className="w-full text-left text-sm py-3 text-[var(--color-text-primary)] flex justify-between items-center"
                   aria-expanded={isOptionsOpen}
                   aria-controls="options-section"
                 >
@@ -536,43 +532,72 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                           className="flex items-center gap-2 mb-2 cursor-pointer"
                           onClick={() => openOptionModal(idx)}
                         >
-                          <span>{option.name}</span>
-                          {option.image && (
-                            <img
-                              src={
-                                option.image instanceof File
-                                  ? URL.createObjectURL(option.image)
-                                  : typeof option.image === "string"
-                                  ? option.image
-                                  : "/placeholder.png"
-                              }
-                              alt={option.name}
-                              className="w-8 h-8 object-cover rounded"
-                            />
-                          )}
+                          <span>
+                            {option.template_name ? (
+                              <span>
+                                Template: {option.template_name} (
+                                {option.options
+                                  .map((opt) => {
+                                    const [name, price] = opt.includes(":")
+                                      ? opt.split(":")
+                                      : [opt, ""];
+                                    return price
+                                      ? `${name} (NGN ${price})`
+                                      : name;
+                                  })
+                                  .join(", ")}
+                                )
+                              </span>
+                            ) : (
+                              <span>
+                                {option.options
+                                  .map((opt) => {
+                                    const [name, price] = opt.includes(":")
+                                      ? opt.split(":")
+                                      : [opt, ""];
+                                    return price
+                                      ? `${name} (NGN ${price})`
+                                      : name;
+                                  })
+                                  .join(", ")}
+                              </span>
+                            )}
+                            {option.note?.note && (
+                              <p className="text-xs text-[var(--color-text-secondary)]">
+                                Note: {option.note.note}
+                              </p>
+                            )}
+                          </span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteOption(idx);
                             }}
                             className="text-red-500 text-xs"
-                            aria-label={`Delete option ${option.name}`}
+                            aria-label={`Delete option ${option.options
+                              .map((opt) => {
+                                const [name] = opt.includes(":")
+                                  ? opt.split(":")
+                                  : [opt];
+                                return name;
+                              })
+                              .join(", ")}`}
                           >
                             Delete
                           </button>
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--color-text-secondary)]">
                         No options available
                       </p>
                     )}
                     <button
                       onClick={() => openOptionModal()}
-                      className="bg-[var(--color-border-secondary)] px-4 text-[var(--color-primary)] py-2 rounded-lg text-sm font-semibold mt-2"
-                      aria-label="Add new option"
+                      className="bg-[var(--color-bg-secondary)] px-4 text-[var(--color-brand-primary)] py-2 rounded-lg text-sm font-semibold mt-2 flex items-center gap-2 hover:text-[var(--color-brand-hover)]"
+                      aria-label="Edit option"
                     >
-                      Add Option
+                      Edit Option
                     </button>
                   </div>
                 )}
@@ -581,7 +606,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <div>
                 <button
                   onClick={() => setIsExtraOpen(!isExtraOpen)}
-                  className="w-full text-left text-sm py-3 text-[var(--color-text)] font-semibold flex justify-between items-center"
+                  className="w-full text-left text-sm py-3 text-[var(--color-text-primary)] flex justify-between items-center"
                   aria-expanded={isExtraOpen}
                   aria-controls="extra-info-section"
                 >
@@ -611,24 +636,20 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             isOpen={isOptionModalOpen}
             onClose={closeOptionModal}
             onSave={handleSaveOption}
-            initialOption={
-              editingOptionIndex !== null
-                ? currentProduct.options[editingOptionIndex]
-                : undefined
-            }
+            initialOption={currentProduct}
           />
 
-          <div className="mt-6 flex justify-end gap-2">
+          <div className="mt-6 flex justify-end gap-4">
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-[var(--color-border)] hover:bg-[var(--color-border-secondary)] rounded-lg text-sm font-medium transition"
+              className="px-4 py-2 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-primary)] text-[var(--color-primary)] rounded-lg text-sm transition"
               aria-label="Cancel editing"
             >
               Cancel
             </button>
             <button
               onClick={handleSaveProduct}
-              className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg text-sm font-semibold transition"
+              className="px-4 py-2 hover:bg-[var(--color-brand-hover)] bg-[var(--color-brand-primary)]  text-[var(--color-text-primary)] rounded-lg text-sm transition"
               aria-label="Save product changes"
             >
               Save

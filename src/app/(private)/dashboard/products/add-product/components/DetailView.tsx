@@ -55,7 +55,6 @@ const DetailsView = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => {
-    // Always edit the first (and only) option if it exists
     setIsModalOpen(true);
   };
 
@@ -103,14 +102,14 @@ const DetailsView = ({
             <img
               src={img.preview}
               alt={`Product image ${idx + 1}`}
-              className={`w-16 h-16 rounded-lg object-cover cursor-pointer border-2 ${
+              className={`w-16 h-16 rounded-xl object-cover cursor-pointer border-2 ${
                 currentProduct.thumbnailIndex === idx
-                  ? "border-[var(--color-primary)]"
+                  ? "border-[var(--color-brand-primary)]"
                   : "border-transparent"
               }`}
             />
             {currentProduct.thumbnailIndex === idx && (
-              <div className="absolute top-1 right-1 bg-[var(--color-primary)] text-white w-4 h-4 flex items-center justify-center rounded-full text-xs">
+              <div className="absolute top-1 right-1 bg-[var(--color-brand-primary)] text-white w-4 h-4 flex items-center justify-center rounded-full text-xs">
                 <Check className="w-3 h-3" />
               </div>
             )}
@@ -118,12 +117,12 @@ const DetailsView = ({
         ))}
         <button
           onClick={() => addMoreImagesRef.current?.click()}
-          className="w-16 h-16 flex-shrink-0 border-2 border-dashed hover:border-[var(--color-primary)] border-[var(--color-border)] rounded-lg flex items-center justify-center text-gray-400"
+          className="w-16 h-16 flex-shrink-0 border-2 border-dashed hover:border-[var(--color-brand-primary)] border-[var(--color-border)] rounded-xl flex items-center justify-center text-gray-400"
         >
           <Plus className="w-6 h-6" />
         </button>
       </div>
-      <p className="text-center text-xs text-gray-500 mt-2">
+      <p className="text-center text-xs text-[var(--color-text-muted)] mt-2">
         Click on the canvas with plus sign to add more images
       </p>
       <input
@@ -220,11 +219,11 @@ const DetailsView = ({
                   <img
                     src={quantityImage}
                     alt="Quantity indicator"
-                    className="w-12 h-12 object-cover rounded-lg"
+                    className="w-12 h-12 object-cover rounded-xl"
                   />
                 )}
 
-                <div className="flex items-center gap-2 border border-[var(--color-border)] rounded-lg px-1 py-1 w-fit">
+                <div className="flex items-center gap-2 border border-[var(--color-border-strong)] rounded-xl px-1 py-1 w-fit">
                   <button
                     onClick={() =>
                       updateDetail(
@@ -235,7 +234,7 @@ const DetailsView = ({
                         ).toString()
                       )
                     }
-                    className="w-8 h-8 flex items-center justify-center rounded-md bg-[var(--color-border-secondary)] hover:bg-[var(--color-border)] text-lg font-bold"
+                    className="w-8 h-8 flex items-center justify-center rounded-md bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-surface)] text-lg font-bold"
                   >
                     -
                   </button>
@@ -251,7 +250,7 @@ const DetailsView = ({
                         (Number(currentProduct.details.quantity) + 1).toString()
                       )
                     }
-                    className="w-8 h-8 flex items-center justify-center rounded-md bg-[var(--color-border-secondary)] hover:bg-[var(--color-border)] text-lg font-bold"
+                    className="w-8 h-8 flex items-center justify-center rounded-md bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-surface)] text-lg font-bold"
                   >
                     +
                   </button>
@@ -270,15 +269,15 @@ const DetailsView = ({
                     }
                     className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
                       currentProduct.details.availability
-                        ? "bg-[var(--color-primary)]"
-                        : "bg-gray-300"
+                        ? "bg-[var(--color-brand-primary)]"
+                        : "bg-[var(--color-border-default)] dark:bg-[var(--color-border-strong)]"
                     }`}
                   >
                     <span
-                      className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${
+                      className={`w-4 h-4 rounded-full shadow-md transform transition-transform ${
                         currentProduct.details.availability
-                          ? "translate-x-6"
-                          : "translate-x-0"
+                          ? "translate-x-6 bg-[var(--color-on-brand)]"
+                          : "translate-x-0 bg-[var(--color-bg-primary)] dark:bg-[var(--color-text-primary)]"
                       }`}
                     />
                   </button>
@@ -302,16 +301,34 @@ const DetailsView = ({
               {currentProduct.details.options?.map((option, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-2 bg-[var(--color-border-secondary)] rounded-lg border border-[var(--color-border)]"
+                  className="flex items-center justify-between p-2 bg-[var(--color-border-secondary)] rounded-xl border border-[var(--color-border)]"
                 >
                   <div className="text-sm">
                     {option.template_name ? (
                       <span>
                         Template: {option.template_name} (
-                        {option.options.join(", ")})
+                        {option.options
+                          .map((opt) => {
+                            const [name, price] = opt.includes(":")
+                              ? opt.split(":")
+                              : [opt, ""];
+                            return price ? `${name} (${price})` : name;
+                          })
+                          .join(", ")}
+                        )
                       </span>
                     ) : (
-                      <span>Options: {option.options.join(", ")}</span>
+                      <span>
+                        Options:{" "}
+                        {option.options
+                          .map((opt) => {
+                            const [name, price] = opt.includes(":")
+                              ? opt.split(":")
+                              : [opt, ""];
+                            return price ? `${name} (${price})` : name;
+                          })
+                          .join(", ")}
+                      </span>
                     )}
                     {option.note?.note && (
                       <p className="text-xs text-gray-500">
@@ -337,7 +354,7 @@ const DetailsView = ({
               ))}
               <button
                 onClick={openModal}
-                className="bg-[var(--color-border-secondary)] px-4 text-[var(--color-primary)] py-2 rounded-lg text-sm font-semibold mt-2 flex items-center gap-2"
+                className="bg-[var(--color-bg-secondary)] px-4 text-[var(--color-brand-primary)] py-2 rounded-lg text-sm font-semibold mt-2 flex items-center gap-2 hover:text-[var(--color-brand-hover)]"
               >
                 {currentProduct.details.options?.length > 0 ? (
                   <>
@@ -367,8 +384,9 @@ const DetailsView = ({
           {isExtraOpen && (
             <div className="py-4">
               <div className="flex justify-between mb-4">
+                {/* Recent */}
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-medium text-[var(--color-text)]">
+                  <label className="text-xs font-medium text-[var(--color-text-primary)]">
                     Recent
                   </label>
                   <button
@@ -377,21 +395,23 @@ const DetailsView = ({
                     }
                     className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
                       currentProduct.details.recent
-                        ? "bg-[var(--color-primary)]"
-                        : "bg-gray-300"
+                        ? "bg-[var(--color-brand-primary)]"
+                        : "bg-[var(--color-border-default)] dark:bg-[var(--color-border-strong)]"
                     }`}
                   >
                     <span
-                      className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${
+                      className={`w-4 h-4 rounded-full shadow-md transform transition-transform ${
                         currentProduct.details.recent
-                          ? "translate-x-6"
-                          : "translate-x-0"
+                          ? "translate-x-6 bg-[var(--color-on-brand)]"
+                          : "translate-x-0 bg-[var(--color-bg-primary)] dark:bg-[var(--color-text-primary)]"
                       }`}
                     />
                   </button>
                 </div>
+
+                {/* Hot Deal */}
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-medium text-[var(--color-text)]">
+                  <label className="text-xs font-medium text-[var(--color-text-primary)]">
                     Hot deal
                   </label>
                   <button
@@ -400,21 +420,23 @@ const DetailsView = ({
                     }
                     className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
                       currentProduct.details.hot_deal
-                        ? "bg-[var(--color-primary)]"
-                        : "bg-gray-300"
+                        ? "bg-[var(--color-brand-primary)]"
+                        : "bg-[var(--color-border-default)] dark:bg-[var(--color-border-strong)]"
                     }`}
                   >
                     <span
-                      className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${
+                      className={`w-4 h-4 rounded-full shadow-md transform transition-transform ${
                         currentProduct.details.hot_deal
-                          ? "translate-x-6"
-                          : "translate-x-0"
+                          ? "translate-x-6 bg-[var(--color-on-brand)]"
+                          : "translate-x-0 bg-[var(--color-bg-primary)] dark:bg-[var(--color-text-primary)]"
                       }`}
                     />
                   </button>
                 </div>
+
+                {/* Featured */}
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-medium text-[var(--color-text)]">
+                  <label className="text-xs font-medium text-[var(--color-text-primary)]">
                     Featured
                   </label>
                   <button
@@ -423,20 +445,21 @@ const DetailsView = ({
                     }
                     className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
                       currentProduct.details.featured
-                        ? "bg-[var(--color-primary)]"
-                        : "bg-gray-300"
+                        ? "bg-[var(--color-brand-primary)]"
+                        : "bg-[var(--color-border-default)] dark:bg-[var(--color-border-strong)]"
                     }`}
                   >
                     <span
-                      className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${
+                      className={`w-4 h-4 rounded-full shadow-md transform transition-transform ${
                         currentProduct.details.featured
-                          ? "translate-x-6"
-                          : "translate-x-0"
+                          ? "translate-x-6 bg-[var(--color-on-brand)]"
+                          : "translate-x-0 bg-[var(--color-bg-primary)] dark:bg-[var(--color-text-primary)]"
                       }`}
                     />
                   </button>
                 </div>
               </div>
+
               <FloatingLabelTextarea
                 placeholder="Optional Product Settings"
                 value={currentProduct.details.extraInfo}
@@ -476,14 +499,22 @@ const DetailsView = ({
           {currentIndex === 0 ? (
             <button
               onClick={goBackToSelection}
-              className="flex-1 px-4 py-3 bg-[var(--color-border-secondary)] text-[var(--color-primary)] rounded-lg text-sm font-semibold"
+              className="flex-1 px-4 py-3 
+                 bg-[var(--color-bg-secondary)] 
+                 hover:bg-[var(--color-bg-surface)] 
+                 text-[var(--color-text-secondary)] 
+                 rounded-xl text-sm font-medium transition-colors"
             >
               Back to Selection
             </button>
           ) : (
             <button
               onClick={prevProduct}
-              className="flex-1 px-4 py-3 bg-[var(--color-border-secondary)] text-[var(--color-primary)] rounded-lg text-sm font-semibold"
+              className="flex-1 px-4 py-3 
+                 bg-[var(--color-bg-secondary)] 
+                 hover:bg-[var(--color-bg-surface)] 
+                 text-[var(--color-text-secondary)] 
+                 rounded-xl text-sm font-medium transition-colors"
             >
               Previous Product
             </button>
@@ -491,7 +522,11 @@ const DetailsView = ({
 
           <button
             onClick={nextProduct}
-            className="flex-1 px-4 py-3 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold"
+            className="flex-1 px-4 py-3 
+               bg-[var(--color-brand-primary)] 
+               hover:bg-[var(--color-brand-hover)] 
+               text-[var(--color-on-brand)] 
+               rounded-xl text-sm font-medium transition-colors"
           >
             {currentIndex === products.length - 1 ? "Finish" : "Next Product"}
           </button>

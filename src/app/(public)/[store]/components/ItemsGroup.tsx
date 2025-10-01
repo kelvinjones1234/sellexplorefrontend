@@ -9,7 +9,7 @@ interface ProductGroupData {
   storename: string;
 }
 
-interface ItemsGroupProps {
+interface ItemsGroupProps { 
   initialData: ProductGroupData | null;
 }
 
@@ -20,7 +20,7 @@ const ItemsGroup = ({ initialData }: ItemsGroupProps) => {
       <div className="w-full max-w-[1200px] mx-auto p-4 text-center text-gray-500 text-lg">
         No products found {initialData?.storename}
       </div>
-    );
+    ); 
   }
 
   // Use the data directly from the API response

@@ -1,32 +1,16 @@
-// // src/api.ts
 // import { API_BASE } from "@/constant/baseUrl";
 // import { getStoreNameFromHost } from "./utils/getStoreName";
+// import {
+//   ErrorResponse,
+//   StoreConfig,
+//   ProductGroupData,
+//   CategoriesAndFeaturedProducts,
+//   FilteredProductResponse,
+//   ProductFilters,
+//   CouponResponse,
+// } from "./types";
 
 // const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || API_BASE;
-
-// export interface ErrorResponse {
-//   detail?: string;
-//   message?: string;
-//   [key: string]: any;
-// }
-
-// export interface PaginatedResponse<T> {
-//   count: number;
-//   next: string | null;
-//   previous: string | null;
-//   results: T[];
-// }
-
-// export interface FilteredProductResponse<T> {
-//   count: number;
-//   results: T[];
-// }
-
-// export interface ProductFilters {
-//   search?: string;
-//   category?: string;
-//   categories?: string;
-// }
 
 // interface CacheEntry {
 //   data: any;
@@ -35,8 +19,31 @@
 //   timestamp: number;
 // }
 
+// // Use WeakMap for better memory management and Map for main cache
 // const clientCache = new Map<string, CacheEntry>();
-// const CACHE_TTL = 5 * 60 * 1000;
+// const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// const MAX_CACHE_SIZE = 100; // Prevent unlimited cache growth
+
+// // --------------- Cache Management ---------------
+
+// function evictOldestEntries(): void {
+//   if (clientCache.size <= MAX_CACHE_SIZE) return;
+
+//   const entries = Array.from(clientCache.entries());
+//   entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+
+//   const entriesToRemove = entries.slice(0, clientCache.size - MAX_CACHE_SIZE);
+//   entriesToRemove.forEach(([key]) => clientCache.delete(key));
+
+//   console.log(`🗑️ Evicted ${entriesToRemove.length} old cache entries`);
+// }
+
+// function setCacheEntry(key: string, entry: CacheEntry): void {
+//   clientCache.set(key, entry);
+//   evictOldestEntries();
+// }
+
+// // --------------- Fetch Helpers ---------------
 
 // async function fetchWithTimeout(
 //   url: string,
@@ -48,7 +55,9 @@
 
 //   try {
 //     const headers = new Headers(options.headers);
-//     if (!(options.body instanceof FormData)) {
+
+//     // Only set Content-Type if not FormData and not already set
+//     if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
 //       headers.set("Content-Type", "application/json");
 //     }
 
@@ -74,6 +83,7 @@
 //   defaultError: string,
 //   cacheKey?: string
 // ): Promise<T> {
+//   // Handle 304 Not Modified
 //   if (response.status === 304) {
 //     if (cacheKey && clientCache.has(cacheKey)) {
 //       const cached = clientCache.get(cacheKey)!;
@@ -82,19 +92,17 @@
 //       );
 //       return cached.data as T;
 //     }
-//     console.warn(
-//       `⚠️ Received 304 Not Modified but no cached data was found for ${cacheKey}`
-//     );
 //     throw new Error("304 Not Modified but no cached data available");
 //   }
 
+//   // Handle non-OK responses
 //   if (!response.ok) {
 //     let message = defaultError;
 //     try {
 //       const errorData: ErrorResponse = await response.json();
 //       message = errorData.detail || errorData.message || defaultError;
-//     } catch (parseError) {
-//       console.warn("Failed to parse error response body:", parseError);
+//     } catch {
+//       // Ignore JSON parse error and use default message
 //     }
 
 //     const error = new Error(message);
@@ -102,40 +110,40 @@
 //     throw error;
 //   }
 
+//   // Handle 204 No Content
 //   if (response.status === 204) {
 //     return {} as T;
 //   }
 
-//   try {
-//     const data = (await response.json()) as T;
+//   const data = (await response.json()) as T;
 
-//     if (cacheKey && response.status === 200) {
-//       const etag = response.headers.get("etag");
-//       const lastModified = response.headers.get("last-modified");
-//       clientCache.set(cacheKey, {
-//         data,
-//         etag: etag || undefined,
-//         lastModified: lastModified || undefined,
-//         timestamp: Date.now(),
-//       });
-//       console.log(`💾 [CACHE SET] Cached fresh data for ${cacheKey}`);
-//     }
+//   // Cache successful responses
+//   if (cacheKey && response.status === 200) {
+//     const etag = response.headers.get("etag");
+//     const lastModified = response.headers.get("last-modified");
 
-//     return data;
-//   } catch (parseError) {
-//     console.error("Failed to parse response JSON:", parseError);
-//     throw new Error("Invalid response format");
+//     setCacheEntry(cacheKey, {
+//       data,
+//       etag: etag || undefined,
+//       lastModified: lastModified || undefined,
+//       timestamp: Date.now(),
+//     });
+
+//     console.log(`💾 [CACHE SET] Cached fresh data for ${cacheKey}`);
 //   }
+
+//   return data;
 // }
 
 // async function getStoreName(): Promise<string | null> {
 //   if (typeof window === "undefined") {
 //     try {
 //       const { headers } = await import("next/headers");
-//       const host = (await headers()).get("host");
+//       const headersList = await headers();
+//       const host = headersList.get("host");
 //       return getStoreNameFromHost(host || undefined);
-//     } catch (e) {
-//       console.error("Failed to get store name on server:", e);
+//     } catch (error) {
+//       console.error("Failed to get store name from headers:", error);
 //       return null;
 //     }
 //   } else {
@@ -152,11 +160,13 @@
 //   const cached = clientCache.get(cacheKey);
 //   const now = Date.now();
 
+//   // Return cached data if it's still valid
 //   if (cached && now - cached.timestamp < CACHE_TTL) {
 //     console.log(`⚡ [CACHE HIT] Returning TTL-valid data for ${cacheKey}`);
 //     return cached.data as T;
 //   }
 
+//   // Prepare conditional request headers
 //   const headers = new Headers(options.headers);
 //   if (cached?.etag) headers.set("If-None-Match", cached.etag);
 //   if (cached?.lastModified)
@@ -171,43 +181,61 @@
 //   return handleResponse<T>(response, defaultError, cacheKey);
 // }
 
-// export const apiClient = {
-//   async getConfiguration(storeIdentifier?: string): Promise<any> {
-//     const store_name = storeIdentifier || (await getStoreName());
-//     if (!store_name) throw new Error("Could not determine the store name.");
-//     const url = `${API_BASE_URL}/stores/${store_name}/`;
-//     const cacheKey = `store-config-${store_name}`;
-//     const storeData = await cachedFetch<any>(
-//       url,
-//       cacheKey,
-//       "Failed to fetch store configuration"
-//     );
-//     return storeData.configurations;
-//   },
+// // --------------- API Client ---------------
 
-//   async getGroupData(storeIdentifier?: string): Promise<any> {
+// export const apiClient = {
+//   async getGroupData(storeIdentifier?: string): Promise<ProductGroupData> {
 //     const store_name = storeIdentifier || (await getStoreName());
-//     if (!store_name) throw new Error("Could not determine the store name.");
+
+//     if (!store_name) {
+//       throw new Error("Could not determine the store name.");
+//     }
+
 //     const url = `${API_BASE_URL}/item-group/${store_name}/`;
 //     const cacheKey = `group-${store_name}`;
-//     return cachedFetch<any>(
+
+//     return cachedFetch<ProductGroupData>(
 //       url,
 //       cacheKey,
 //       "Failed to fetch product group data"
 //     );
 //   },
 
-//   async getCategoriesAndFeaturedProducts(
-//     storeIdentifier?: string
-//   ): Promise<any[]> {
+//   async getConfiguration(storeIdentifier?: string): Promise<StoreConfig> {
 //     const store_name = storeIdentifier || (await getStoreName());
-//     if (!store_name) throw new Error("Could not determine the store name.");
-//     const url = `${API_BASE_URL}/featured-and-category/${store_name}/`;
-//     const cacheKey = `featured-and-category-${store_name}`;
-//     return cachedFetch<any[]>(
+
+//     if (!store_name) {
+//       throw new Error("Could not determine the store name.");
+//     }
+
+//     const url = `${API_BASE_URL}/stores/${store_name}/`;
+//     const cacheKey = `store-config-${store_name}`;
+
+//     const storeData = await cachedFetch<{ configurations: StoreConfig }>(
 //       url,
 //       cacheKey,
-//       "Failed to fetch featured products"
+//       "Failed to fetch store configuration"
+//     );
+
+//     return storeData.configurations;
+//   },
+
+//   async getCategoriesAndFeaturedProducts(
+//     storeIdentifier?: string
+//   ): Promise<CategoriesAndFeaturedProducts> {
+//     const store_name = storeIdentifier || (await getStoreName());
+
+//     if (!store_name) {
+//       throw new Error("Could not determine the store name.");
+//     }
+
+//     const url = `${API_BASE_URL}/featured-and-category/${store_name}/`;
+//     const cacheKey = `featured-and-category-${store_name}`;
+
+//     return cachedFetch<CategoriesAndFeaturedProducts>(
+//       url,
+//       cacheKey,
+//       "Failed to fetch featured products and categories"
 //     );
 //   },
 
@@ -216,6 +244,7 @@
 //     storeIdentifier?: string
 //   ): Promise<FilteredProductResponse<any>> {
 //     const store_name = storeIdentifier || (await getStoreName());
+
 //     if (!store_name) {
 //       throw new Error("Could not determine the store name.");
 //     }
@@ -223,7 +252,7 @@
 //     const params = new URLSearchParams();
 //     if (filters.search) params.append("search", filters.search);
 //     if (filters.category) params.append("category", filters.category);
-//     // if (filters.categories) params.append("categories", filters.categories);
+//     if (filters.categories) params.append("categories", filters.categories);
 
 //     const queryString = params.toString();
 //     const url = `${API_BASE_URL}/items/${store_name}/filtered/${
@@ -243,6 +272,7 @@
 //     storeIdentifier?: string
 //   ): Promise<FilteredProductResponse<any>> {
 //     const store_name = storeIdentifier || (await getStoreName());
+
 //     if (!store_name) {
 //       throw new Error("Could not determine the store name.");
 //     }
@@ -250,30 +280,82 @@
 //     const params = new URLSearchParams();
 //     if (filters.search) params.append("search", filters.search);
 //     if (filters.category) params.append("category", filters.category);
-//     // if (filters.categories) params.append("categories", filters.categories);
+//     if (filters.categories) params.append("categories", filters.categories);
 
 //     const queryString = params.toString();
 //     const url = `${API_BASE_URL}/items/${store_name}/items/${
 //       queryString ? `?${queryString}` : ""
 //     }`;
-//     const cacheKey = `products-filter-${store_name}-${queryString}`;
+//     const cacheKey = `products-by-cat-${store_name}-${queryString}`;
 
 //     return cachedFetch<FilteredProductResponse<any>>(
 //       url,
 //       cacheKey,
-//       "Failed to fetch filtered products"
+//       "Failed to fetch products by category"
 //     );
 //   },
 
+//   async getDeliveryAreaOptions(storeIdentifier?: string): Promise<{
+//     store_name: string;
+//     delivery_locations: {
+//       id: number;
+//       location: string;
+//       delivery_fee: string;
+//     }[];
+//   }> {
+//     const store_name = storeIdentifier || (await getStoreName());
+
+//     if (!store_name) {
+//       throw new Error("Could not determine the store name.");
+//     }
+
+//     const url = `${API_BASE_URL}/delivery-locations/${store_name}/`;
+//     const cacheKey = `delivery-locations-${store_name}`;
+
+//     return cachedFetch<{
+//       store_name: string;
+//       delivery_locations: {
+//         id: number;
+//         location: string;
+//         delivery_fee: string;
+//       }[];
+//     }>(url, cacheKey, "Failed to fetch delivery locations");
+//   },
+
+//   async applyCoupon(code: string, storeIdentifier?: string): Promise<CouponResponse> {
+//     const store_name = storeIdentifier || (await getStoreName());
+
+//     if (!store_name) {
+//       throw new Error("Could not determine the store name.");
+//     }
+
+//     const url = `${API_BASE_URL}/coupon-check/${store_name}/`;
+//     const cacheKey = `coupon-${store_name}-${code}`;
+
+//     const response = await fetchWithTimeout(url, {
+//       method: "POST",
+//       body: JSON.stringify({ code }),
+//     });
+
+//     return handleResponse<CouponResponse>(
+//       response,
+//       "Failed to apply coupon",
+//       cacheKey
+//     );
+//   },
+
+//   // --------------- Cache Management Methods ---------------
+
 //   clearCache(pattern?: string): void {
 //     if (typeof window === "undefined") return;
+
 //     if (pattern) {
 //       const keysToDelete = Array.from(clientCache.keys()).filter((key) =>
 //         key.includes(pattern)
 //       );
 //       keysToDelete.forEach((key) => clientCache.delete(key));
 //       console.log(
-//         `🗑️ Cleared ${keysToDelete.length} cache entries matching "${pattern}"`
+//         `🗑️ Cleared ${keysToDelete.length} entries matching "${pattern}"`
 //       );
 //     } else {
 //       const count = clientCache.size;
@@ -282,12 +364,18 @@
 //     }
 //   },
 
-//   dehydrateCache(): Record<string, any> {
+//   dehydrateCache(): Record<string, CacheEntry> {
 //     if (typeof window !== "undefined") return {};
-//     return Object.fromEntries(clientCache);
+
+//     const dehydrated: Record<string, CacheEntry> = {};
+//     clientCache.forEach((value, key) => {
+//       dehydrated[key] = value;
+//     });
+
+//     return dehydrated;
 //   },
 
-//   hydrateCache(dehydratedState?: Record<string, any>): void {
+//   hydrateCache(dehydratedState?: Record<string, CacheEntry>): void {
 //     if (
 //       typeof window === "undefined" ||
 //       !dehydratedState ||
@@ -295,17 +383,32 @@
 //     ) {
 //       return;
 //     }
+
 //     try {
-//       const state = new Map(Object.entries(dehydratedState));
-//       state.forEach((value, key) => {
-//         if (!clientCache.has(key)) clientCache.set(key, value);
+//       let hydratedCount = 0;
+//       Object.entries(dehydratedState).forEach(([key, value]) => {
+//         if (!clientCache.has(key) && this.isValidCacheEntry(value)) {
+//           clientCache.set(key, value);
+//           hydratedCount++;
+//         }
 //       });
-//       console.log(
-//         `💧 [CACHE HYDRATED] Restored ${state.size} entries from server.`
-//       );
+
+//       if (hydratedCount > 0) {
+//         console.log(`💧 [CACHE HYDRATED] Restored ${hydratedCount} entries`);
+//         evictOldestEntries(); // Clean up if needed
+//       }
 //     } catch (error) {
 //       console.error("[CACHE] Failed to hydrate cache:", error);
 //     }
+//   },
+
+//   isValidCacheEntry(entry: any): entry is CacheEntry {
+//     return (
+//       entry &&
+//       typeof entry === "object" &&
+//       typeof entry.timestamp === "number" &&
+//       entry.data !== undefined
+//     );
 //   },
 
 //   debugCache(): void {
@@ -313,29 +416,36 @@
 //       console.log("Cache debugging only available on the client-side.");
 //       return;
 //     }
+
 //     console.log("📊 Cache Debug Info:");
-//     console.log(`Cache size: ${clientCache.size} entries`);
-//     if (clientCache.size === 0) {
-//       console.log("No cached entries found.");
-//       return;
-//     }
+//     console.log(`Cache size: ${clientCache.size}/${MAX_CACHE_SIZE} entries`);
+
 //     const now = Date.now();
-//     clientCache.forEach((value, key) => {
+//     const entries = Array.from(clientCache.entries()).sort(
+//       (a, b) => b[1].timestamp - a[1].timestamp
+//     );
+
+//     entries.forEach(([key, value]) => {
 //       const age = Math.round((now - value.timestamp) / 1000);
+//       const isExpired = now - value.timestamp > CACHE_TTL;
 //       console.log(
-//         `- ${key}: age=${age}s, ETag=${!!value.etag}, LastModified=${!!value.lastModified}`
+//         `- ${key}: age=${age}s${
+//           isExpired ? " (EXPIRED)" : ""
+//         }, ETag=${!!value.etag}, LastModified=${!!value.lastModified}`
 //       );
 //     });
 //   },
+
+//   getCacheStats() {
+//     return {
+//       size: clientCache.size,
+//       maxSize: MAX_CACHE_SIZE,
+//       ttl: CACHE_TTL / 1000, // in seconds
+//       entries: Array.from(clientCache.keys()),
+//     };
+//   },
 // };
 
-
-
-
-
-
-
-// src/api.ts
 import { API_BASE } from "@/constant/baseUrl";
 import { getStoreNameFromHost } from "./utils/getStoreName";
 import {
@@ -345,6 +455,7 @@ import {
   CategoriesAndFeaturedProducts,
   FilteredProductResponse,
   ProductFilters,
+  CouponResponse,
 } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || API_BASE;
@@ -356,10 +467,31 @@ interface CacheEntry {
   timestamp: number;
 }
 
+// Use WeakMap for better memory management and Map for main cache
 const clientCache = new Map<string, CacheEntry>();
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const MAX_CACHE_SIZE = 100; // Prevent unlimited cache growth
 
-// --------------- fetch helpers ---------------
+// --------------- Cache Management ---------------
+
+function evictOldestEntries(): void {
+  if (clientCache.size <= MAX_CACHE_SIZE) return;
+
+  const entries = Array.from(clientCache.entries());
+  entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+
+  const entriesToRemove = entries.slice(0, clientCache.size - MAX_CACHE_SIZE);
+  entriesToRemove.forEach(([key]) => clientCache.delete(key));
+
+  console.log(`🗑️ Evicted ${entriesToRemove.length} old cache entries`);
+}
+
+function setCacheEntry(key: string, entry: CacheEntry): void {
+  clientCache.set(key, entry);
+  evictOldestEntries();
+}
+
+// --------------- Fetch Helpers ---------------
 
 async function fetchWithTimeout(
   url: string,
@@ -371,7 +503,9 @@ async function fetchWithTimeout(
 
   try {
     const headers = new Headers(options.headers);
-    if (!(options.body instanceof FormData)) {
+
+    // Only set Content-Type if not FormData and not already set
+    if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
 
@@ -397,6 +531,7 @@ async function handleResponse<T>(
   defaultError: string,
   cacheKey?: string
 ): Promise<T> {
+  // Handle 304 Not Modified
   if (response.status === 304) {
     if (cacheKey && clientCache.has(cacheKey)) {
       const cached = clientCache.get(cacheKey)!;
@@ -408,13 +543,14 @@ async function handleResponse<T>(
     throw new Error("304 Not Modified but no cached data available");
   }
 
+  // Handle non-OK responses
   if (!response.ok) {
     let message = defaultError;
     try {
       const errorData: ErrorResponse = await response.json();
       message = errorData.detail || errorData.message || defaultError;
     } catch {
-      // ignore JSON parse error
+      // Ignore JSON parse error and use default message
     }
 
     const error = new Error(message);
@@ -422,21 +558,25 @@ async function handleResponse<T>(
     throw error;
   }
 
+  // Handle 204 No Content
   if (response.status === 204) {
     return {} as T;
   }
 
   const data = (await response.json()) as T;
 
+  // Cache successful responses
   if (cacheKey && response.status === 200) {
     const etag = response.headers.get("etag");
     const lastModified = response.headers.get("last-modified");
-    clientCache.set(cacheKey, {
+
+    setCacheEntry(cacheKey, {
       data,
       etag: etag || undefined,
       lastModified: lastModified || undefined,
       timestamp: Date.now(),
     });
+
     console.log(`💾 [CACHE SET] Cached fresh data for ${cacheKey}`);
   }
 
@@ -447,9 +587,11 @@ async function getStoreName(): Promise<string | null> {
   if (typeof window === "undefined") {
     try {
       const { headers } = await import("next/headers");
-      const host = (await headers()).get("host");
+      const headersList = await headers();
+      const host = headersList.get("host");
       return getStoreNameFromHost(host || undefined);
-    } catch {
+    } catch (error) {
+      console.error("Failed to get store name from headers:", error);
       return null;
     }
   } else {
@@ -466,11 +608,13 @@ async function cachedFetch<T>(
   const cached = clientCache.get(cacheKey);
   const now = Date.now();
 
+  // Return cached data if it's still valid
   if (cached && now - cached.timestamp < CACHE_TTL) {
     console.log(`⚡ [CACHE HIT] Returning TTL-valid data for ${cacheKey}`);
     return cached.data as T;
   }
 
+  // Prepare conditional request headers
   const headers = new Headers(options.headers);
   if (cached?.etag) headers.set("If-None-Match", cached.etag);
   if (cached?.lastModified)
@@ -485,27 +629,15 @@ async function cachedFetch<T>(
   return handleResponse<T>(response, defaultError, cacheKey);
 }
 
-// --------------- API client ---------------
+// --------------- API Client ---------------
 
 export const apiClient = {
-  async getConfiguration(storeIdentifier?: string): Promise<StoreConfig> {
-    const store_name = storeIdentifier || (await getStoreName());
-    if (!store_name) throw new Error("Could not determine the store name.");
-
-    const url = `${API_BASE_URL}/stores/${store_name}/`;
-    const cacheKey = `store-config-${store_name}`;
-
-    const storeData = await cachedFetch<{ configurations: StoreConfig }>(
-      url,
-      cacheKey,
-      "Failed to fetch store configuration"
-    );
-    return storeData.configurations;
-  },
-
   async getGroupData(storeIdentifier?: string): Promise<ProductGroupData> {
     const store_name = storeIdentifier || (await getStoreName());
-    if (!store_name) throw new Error("Could not determine the store name.");
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
 
     const url = `${API_BASE_URL}/item-group/${store_name}/`;
     const cacheKey = `group-${store_name}`;
@@ -517,17 +649,41 @@ export const apiClient = {
     );
   },
 
+  async getConfiguration(storeIdentifier?: string): Promise<StoreConfig> {
+    const store_name = storeIdentifier || (await getStoreName());
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
+
+    const url = `${API_BASE_URL}/stores/${store_name}/`;
+    const cacheKey = `store-config-${store_name}`;
+
+    const storeData = await cachedFetch<{ configurations: StoreConfig }>(
+      url,
+      cacheKey,
+      "Failed to fetch store configuration"
+    );
+
+    return storeData.configurations;
+  },
+
   async getCategoriesAndFeaturedProducts(
     storeIdentifier?: string
   ): Promise<CategoriesAndFeaturedProducts> {
     const store_name = storeIdentifier || (await getStoreName());
-    if (!store_name) throw new Error("Could not determine the store name.");
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
+
     const url = `${API_BASE_URL}/featured-and-category/${store_name}/`;
     const cacheKey = `featured-and-category-${store_name}`;
+
     return cachedFetch<CategoriesAndFeaturedProducts>(
       url,
       cacheKey,
-      "Failed to fetch featured products"
+      "Failed to fetch featured products and categories"
     );
   },
 
@@ -536,7 +692,10 @@ export const apiClient = {
     storeIdentifier?: string
   ): Promise<FilteredProductResponse<any>> {
     const store_name = storeIdentifier || (await getStoreName());
-    if (!store_name) throw new Error("Could not determine the store name.");
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
 
     const params = new URLSearchParams();
     if (filters.search) params.append("search", filters.search);
@@ -561,7 +720,10 @@ export const apiClient = {
     storeIdentifier?: string
   ): Promise<FilteredProductResponse<any>> {
     const store_name = storeIdentifier || (await getStoreName());
-    if (!store_name) throw new Error("Could not determine the store name.");
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
 
     const params = new URLSearchParams();
     if (filters.search) params.append("search", filters.search);
@@ -581,9 +743,129 @@ export const apiClient = {
     );
   },
 
-  // cache helpers
+  async getDeliveryAreaOptions(storeIdentifier?: string): Promise<{
+    store_name: string;
+    delivery_locations: {
+      id: number;
+      location: string;
+      delivery_fee: string;
+    }[];
+  }> {
+    const store_name = storeIdentifier || (await getStoreName());
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
+
+    const url = `${API_BASE_URL}/delivery-locations/${store_name}/`;
+    const cacheKey = `delivery-locations-${store_name}`;
+
+    return cachedFetch<{
+      store_name: string;
+      delivery_locations: {
+        id: number;
+        location: string;
+        delivery_fee: string;
+      }[];
+    }>(url, cacheKey, "Failed to fetch delivery locations");
+  },
+
+  async applyCoupon(
+    code: string,
+    storeIdentifier?: string
+  ): Promise<CouponResponse> {
+    const store_name = storeIdentifier || (await getStoreName());
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
+
+    const url = `${API_BASE_URL}/coupon-check/${store_name}/`;
+    const cacheKey = `coupon-${store_name}-${code}`;
+
+    const response = await fetchWithTimeout(url, {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
+
+    return handleResponse<CouponResponse>(
+      response,
+      "Failed to apply coupon",
+      cacheKey
+    );
+  },
+
+  async createOrder(data: any, storeIdentifier?: string): Promise<any> {
+    const store_name = storeIdentifier || (await getStoreName());
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
+
+    console.log("order data:", data);
+
+    const url = `${API_BASE_URL}/orders/${store_name}/`;
+
+    const response = await fetchWithTimeout(url, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+
+    return handleResponse<any>(response, "Failed to create order");
+  },
+
+  async updateOrderStatus(
+    orderId: number,
+    status: string,
+    storeIdentifier?: string
+  ): Promise<any> {
+    const store_name = storeIdentifier || (await getStoreName());
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
+
+    const url = `${API_BASE_URL}/orders/${store_name}/${orderId}/status/`;
+
+    const response = await fetchWithTimeout(url, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+
+    return handleResponse<any>(response, "Failed to update order status");
+  },
+
+  async updateOrderItem(
+    orderId: number,
+    itemId: number,
+    data: {
+      quantity?: number;
+      option?: string;
+      discount_price?: number | null;
+    },
+    storeIdentifier?: string
+  ): Promise<any> {
+    const store_name = storeIdentifier || (await getStoreName());
+
+    if (!store_name) {
+      throw new Error("Could not determine the store name.");
+    }
+
+    const url = `${API_BASE_URL}/orders/${store_name}/${orderId}/items/${itemId}/`;
+
+    const response = await fetchWithTimeout(url, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+
+    return handleResponse<any>(response, "Failed to update order item");
+  },
+
+  // --------------- Cache Management Methods ---------------
+
   clearCache(pattern?: string): void {
     if (typeof window === "undefined") return;
+
     if (pattern) {
       const keysToDelete = Array.from(clientCache.keys()).filter((key) =>
         key.includes(pattern)
@@ -599,12 +881,18 @@ export const apiClient = {
     }
   },
 
-  dehydrateCache(): Record<string, any> {
+  dehydrateCache(): Record<string, CacheEntry> {
     if (typeof window !== "undefined") return {};
-    return Object.fromEntries(clientCache);
+
+    const dehydrated: Record<string, CacheEntry> = {};
+    clientCache.forEach((value, key) => {
+      dehydrated[key] = value;
+    });
+
+    return dehydrated;
   },
 
-  hydrateCache(dehydratedState?: Record<string, any>): void {
+  hydrateCache(dehydratedState?: Record<string, CacheEntry>): void {
     if (
       typeof window === "undefined" ||
       !dehydratedState ||
@@ -612,15 +900,32 @@ export const apiClient = {
     ) {
       return;
     }
+
     try {
-      const state = new Map(Object.entries(dehydratedState));
-      state.forEach((value, key) => {
-        if (!clientCache.has(key)) clientCache.set(key, value);
+      let hydratedCount = 0;
+      Object.entries(dehydratedState).forEach(([key, value]) => {
+        if (!clientCache.has(key) && this.isValidCacheEntry(value)) {
+          clientCache.set(key, value);
+          hydratedCount++;
+        }
       });
-      console.log(`💧 [CACHE HYDRATED] Restored ${state.size} entries`);
+
+      if (hydratedCount > 0) {
+        console.log(`💧 [CACHE HYDRATED] Restored ${hydratedCount} entries`);
+        evictOldestEntries(); // Clean up if needed
+      }
     } catch (error) {
       console.error("[CACHE] Failed to hydrate cache:", error);
     }
+  },
+
+  isValidCacheEntry(entry: any): entry is CacheEntry {
+    return (
+      entry &&
+      typeof entry === "object" &&
+      typeof entry.timestamp === "number" &&
+      entry.data !== undefined
+    );
   },
 
   debugCache(): void {
@@ -628,14 +933,32 @@ export const apiClient = {
       console.log("Cache debugging only available on the client-side.");
       return;
     }
+
     console.log("📊 Cache Debug Info:");
-    console.log(`Cache size: ${clientCache.size} entries`);
+    console.log(`Cache size: ${clientCache.size}/${MAX_CACHE_SIZE} entries`);
+
     const now = Date.now();
-    clientCache.forEach((value, key) => {
+    const entries = Array.from(clientCache.entries()).sort(
+      (a, b) => b[1].timestamp - a[1].timestamp
+    );
+
+    entries.forEach(([key, value]) => {
       const age = Math.round((now - value.timestamp) / 1000);
+      const isExpired = now - value.timestamp > CACHE_TTL;
       console.log(
-        `- ${key}: age=${age}s, ETag=${!!value.etag}, LastModified=${!!value.lastModified}`
+        `- ${key}: age=${age}s${
+          isExpired ? " (EXPIRED)" : ""
+        }, ETag=${!!value.etag}, LastModified=${!!value.lastModified}`
       );
     });
+  },
+
+  getCacheStats() {
+    return {
+      size: clientCache.size,
+      maxSize: MAX_CACHE_SIZE,
+      ttl: CACHE_TTL / 1000, // in seconds
+      entries: Array.from(clientCache.keys()),
+    };
   },
 };

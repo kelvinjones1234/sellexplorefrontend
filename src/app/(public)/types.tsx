@@ -90,3 +90,19 @@ export interface ProductFilters {
   category?: string;
   categories?: string;
 }
+
+
+
+
+export interface CouponResponse {
+  code: string;
+  discount_type: "fixed" | "percentage";
+  discount_value: number;
+  products: {
+    id: number;
+    name: string;
+    price: number;
+    discount_price: number | null;
+  }[];
+  message: string;
+}

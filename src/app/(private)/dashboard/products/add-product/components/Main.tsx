@@ -272,11 +272,11 @@ const Main = () => {
   };
 
   const Header = () => (
-    <header className="sticky top-0 bg-[var(--color-bg)] z-20 border-b border-[var(--color-border-secondary)] px-4 py-3">
+    <header className="sticky top-0 z-20 bg-[var(--color-bg-primary)] border-b border-[var(--color-border-default)] px-4 py-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
           <Link href="/dashboard/products">
-            <span className="font-medium text-[var(--color-heading)]">
+            <span className="font-medium text-[var(--color-text-primary)]">
               Products
             </span>
           </Link>
@@ -359,7 +359,7 @@ const SelectionView = ({
       {products.map((product: any, idx: number) => (
         <div
           key={idx}
-          className="flex items-center justify-between p-2 bg-[var(--color-border-secondary)] rounded-lg border border-[var(--color-border)]"
+          className="flex items-center justify-between p-2 bg-[var(--color-border-secondary)] rounded-xl border-2 border-[var(--color-border-strong)]"
         >
           <div className="relative w-16 h-14 flex-shrink-0">
             <img
@@ -383,7 +383,7 @@ const SelectionView = ({
             >
               <X className="w-5 h-5" />
             </button>
-            <span className="text-[var(--color-text)] text-xs font-medium">
+            <span className="text-[var(--color-text-secondary)] text-xs font-medium">
               Product {idx + 1}
             </span>
           </div>
@@ -391,7 +391,7 @@ const SelectionView = ({
       ))}
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="flex items-center justify-center gap-2 text-[var(--color-body)] py-4 border-2 border-dashed border-[var(--color-border)] hover:border-[var(--color-primary)] rounded-lg transition-colors"
+        className="flex items-center justify-center gap-2 text-[var(--color-text-muted)] py-4 border-2 border-dashed border-[var(--color-border)] rounded-lg transition-colors"
       >
         <Plus className="w-5 h-5" />
         <span className="text-[.7rem] font-medium">
@@ -413,7 +413,7 @@ const SelectionView = ({
       <div className="mt-8">
         <button
           onClick={proceedToDetails}
-          className="w-full bg-[var(--color-primary)] text-white py-4 rounded-xl font-semibold text-sm shadow-sm hover:bg-opacity-90 transition-all"
+          className="w-full bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-primary)] py-4 rounded-xl font-semibold text-sm shadow-sm hover:bg-opacity-90 transition-all"
         >
           Proceed to add details
         </button>

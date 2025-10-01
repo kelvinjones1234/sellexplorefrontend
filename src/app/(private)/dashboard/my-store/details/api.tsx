@@ -153,7 +153,7 @@ class APIClient {
 
   async updateStoreWithImages(formData: FormData): Promise<Store> {
     const response = await this.fetchWithTimeout(`${API_BASE_URL}/store/`, {
-      method: "PUT",
+      method: "PUT", 
       body: formData,
       headers: this.accessToken
         ? { Authorization: `Bearer ${this.accessToken}` }

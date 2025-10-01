@@ -1,0 +1,280 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === Light Mode === */
+:root {
+  /* --- Global Backgrounds --- */
+  --color-bg-primary: #ffffff; /* Main page background */
+  --color-bg-secondary: #f9fafb; /* Lighter background for sections, sidebars, or alternating rows */
+  --color-bg-surface: #ffffff; /* Background for cards, modals, and panels (keep consistent with --color-bg-primary for most cases) */
+
+  /* --- Text & Headings --- */
+  --color-text-primary: #1f2937; /* Main, darkest text and primary headings */
+  --color-text-secondary: #4b5563; /* Body copy, secondary labels */
+  --color-text-muted: #9ca3af; /* Placeholder text, helper text, timestamps, less important details */
+
+  /* --- Brand & Interactive --- */
+  --color-brand-primary: #f97316; /* Primary call-to-action (CTA) buttons, main links, active states */
+  --color-brand-hover: #ea580c; /* Hover state for primary brand color */
+  --color-brand-light: #fdba74; /* Light background for primary brand elements (e.g., badges) */
+  --color-brand-dark: #c2410c; /* Darker variant for shadows or strong borders */
+  --color-on-brand: #ffffff; /* Text color that sits ON the brand-primary background (ensuring contrast) */
+
+  --color-accent: #1d4ed8; /* Secondary accent color (e.g., for charts, secondary buttons, highlights) */
+  --color-on-accent: #ffffff; /* Text color that sits ON the accent background */
+
+  /* --- Utility/State Colors --- */
+  --color-success: #059669; /* Success messages, positive indicators (green) */
+  --color-on-success: #ffffff;
+  --color-info: #2563eb; /* Informational alerts, notifications (blue) */
+  --color-on-info: #ffffff;
+  --color-warning: #fbbf24; /* Cautionary alerts, soft warnings (yellow/amber) */
+  --color-on-warning: #1f2937; /* Dark text for light warning backgrounds */
+  --color-danger: #ef4444; /* Error messages, destructive actions (red) */
+  --color-on-danger: #ffffff;
+
+  /* --- Borders & Shadows --- */
+  --color-border-default: #e5e7eb; /* General borders, input fields, subtle dividers */
+  --color-border-strong: #d1d5db; /* Stronger dividers, table borders */
+  --color-shadow-default: rgba(0, 0, 0, 0.08); /* Subtle box shadows for depth */
+}
+
+/* === Dark Mode (deep navy theme) === */
+html.dark {
+  /* --- Global Backgrounds --- */
+  --color-bg-primary: #1e293b;
+  --color-bg-secondary: #334155;
+  --color-bg-surface: #1e293b;
+
+  /* --- Text & Headings --- */
+  --color-text-primary: #f8fafc; /* Lighter/white for main text and headings */
+  --color-text-secondary: #cbd5e1; /* Off-white for body copy */
+  --color-text-muted: #94a3b8; /* Muted/gray for less important text */
+
+  /* --- Brand & Interactive --- */
+  --color-brand-primary: #fb923c;
+  --color-brand-hover: #f97316;
+  --color-brand-light: #fed7aa;
+  --color-brand-dark: #ea580c;
+  --color-on-brand: #1f2937; /* Dark text for light orange primary in dark mode */
+
+  --color-accent: #3b82f6;
+  --color-on-accent: #ffffff;
+
+  /* --- Utility/State Colors --- */
+  --color-success: #34d399;
+  --color-on-success: #1f2937;
+  --color-info: #60a5fa;
+  --color-on-info: #1f2937;
+  --color-warning: #fcd34d;
+  --color-on-warning: #1f2937;
+  --color-danger: #f87171;
+  --color-on-danger: #1f2937;
+
+  /* --- Borders & Shadows --- */
+  --color-border-default: #334155;
+  --color-border-strong: #475569;
+  --color-shadow-default: rgba(0, 0, 0, 0.7);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-heading);
+  }
+}
+
+@layer utilities {
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+}
+
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+
+
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+/* the above is new and the below is old */
+
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === Light Mode === */
+:root {
+  /* Backgrounds */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f9fafb;
+    /* --color-bg-secondary: #f1f5f9; */
+
+  --color-surface: #fefcf9;
+
+  /* Text */
+  --color-text: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #9ca3af;
+
+  /* Headings & Body */
+  --color-heading: #1f2937;
+  --color-body: #4b5563;
+
+  /* Brand (Orange + Blue Accent) */
+  --color-primary: #f97316;
+  --color-primary-hover: #ea580c;
+  --color-primary-light: #fdba74;
+  --color-primary-dark: #c2410c;
+ 
+  --color-accent: #1d4ed8;
+
+  /* Borders & Shadows */
+  --color-border: #e2e8f0;
+  --color-border-secondary: #f1f5f9;
+  --color-border-strong: #d1d5db;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+
+  /* Light Cards */
+  --card-bg-1: #fff7ed;
+  --card-text-1: #9a3412;
+
+  --card-bg-2: #eff6ff;
+  --card-text-2: #1d4ed8;
+
+  --card-bg-3: #ecfdf5;
+  --card-text-3: #047857;
+
+  --card-bg-4: #fef2f2;
+  --card-text-4: #b91c1c;
+
+  --card-bg-5: #fefce8;
+  --card-text-5: #854d0e;
+
+  --dashboard-card-bg: #f3f4f6;
+  --color-success: #2AAA8A;
+}
+
+/* === Dark Mode (deep navy theme) === */
+html.dark {
+  /* Backgrounds */
+  /* --color-bg: #0b1120; */
+  --color-bg: #1E293B;
+
+  /* --color-bg-secondary: #283043; 111827 */
+   --color-bg-secondary: #334155; 
+  --color-surface: #1e293b;
+
+  /* Text */
+  --color-text: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+
+  /* Headings & Body */
+  --color-heading: #f1f5f9;
+  --color-body: #d1d5db;
+
+  /* Brand */
+  --color-primary: #fb923c;
+  --color-primary-hover: #f97316;
+  --color-primary-light: #fed7aa;
+  --color-primary-dark: #ea580c;
+
+  --color-accent: #3b82f6;
+
+  /* Borders & Shadows */
+  --color-border: #334155;
+  --color-border-secondary: #93C5FD0D; /* slate-800 */
+  --color-border-strong: #334155;
+  --color-shadow: rgba(0, 0, 0, 0.7);
+
+  /* Dark Cards */
+  --card-bg-1: #283043;
+  --card-text-1: #38bdf8;
+
+  --card-bg-2: #1e3a5f;
+  --card-text-2: #60a5fa;
+
+  --card-bg-3: #0f172a;
+  --card-text-3: #3b82f6;
+
+  --card-bg-4: #1e1b4b;
+  --card-text-4: #818cf8;
+
+  --card-bg-5: #1e293b;
+  --card-text-5: #fb923c;
+
+  --dashboard-card-bg: #111827;
+  --color-success: #2AAA8A;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-heading);
+  }
+}
+
+@layer utilities {
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+}
+
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+
+

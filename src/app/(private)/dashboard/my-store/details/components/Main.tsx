@@ -168,15 +168,6 @@ const LocationTab: React.FC<LocationTabProps> = ({
       }
       placeholder="Store Address"
     />
-    <FloatingLabelInput
-      type="text"
-      name="delivery"
-      value={locationDetails.delivery}
-      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-        setLocationDetails((prev) => ({ ...prev, delivery: e.target.value }))
-      }
-      placeholder="Delivery Location (e.g., everywhere in Lagos)"
-    />
   </div>
 );
 
@@ -559,7 +550,6 @@ const Main: React.FC = () => {
     country: "",
     state: "",
     address: "",
-    delivery: "",
   });
   const [businessCategory, setBusinessCategory] = useState<string>("");
   const [productTypes, setProductTypes] = useState<string[]>([]);
@@ -633,7 +623,6 @@ const Main: React.FC = () => {
           country: store.country || "",
           state: store.state || "",
           address: store.address || "",
-          delivery: store.delivery || "",
         });
         setBusinessCategory(store.business_category || "");
         setProductTypes(store.product_types || []);
@@ -789,7 +778,6 @@ const Main: React.FC = () => {
       formData.append("country", locationDetails.country);
       formData.append("state", locationDetails.state);
       formData.append("address", locationDetails.address);
-      formData.append("delivery", locationDetails.delivery);
       formData.append("business_category", businessCategory);
       formData.append("product_types", JSON.stringify(productTypes));
       formData.append("story", aboutUs.story);
@@ -894,7 +882,6 @@ const Main: React.FC = () => {
                     country: store.country || "",
                     state: store.state || "",
                     address: store.address || "",
-                    delivery: store.delivery || "",
                   });
                   setBusinessCategory(store.business_category || "");
                   setProductTypes(store.product_types || []);

@@ -176,7 +176,7 @@ const SigninForm: React.FC = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="group relative w-full flex justify-center py-3 px-4 rounded-[3rem] text-sm font-semibold hover:bg-[var(--color-primary-hover)] bg-[var(--color-primary)] text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all duration-200"
+          className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-semibold hover:bg-[var(--color-primary-hover)] bg-[var(--color-primary)] text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all duration-200"
         >
           {isLoading ? (
             <div className="">signing in...</div>

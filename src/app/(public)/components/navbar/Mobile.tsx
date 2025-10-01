@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Bookmark } from "lucide-react";
+import { X, Twitter, Instagram, Facebook  } from "lucide-react";
 import Link from "next/link";
 import { navItems } from "@/constant/nav";
 
@@ -63,11 +63,30 @@ const MobileNavbar: React.FC<MobileNavProps> = ({
         </nav>
 
         {/* Mobile Actions */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700/50">
-          <button className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-[var(--color-border)] rounded-lg shadow-sm">
-            <Bookmark size={18} />
-            Bookmarked ({totalItems})
-          </button>
+        <div className="p-6 border-t border-[var(--color-border)] dark:border-gray-700/50">
+          <div className="flex items-center justify-center gap-6">
+            <Link href="https://twitter.com/your-brand" aria-label="Twitter">
+              <Twitter
+                size={22}
+                className="text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors"
+              />
+            </Link>
+            <Link
+              href="https://instagram.com/your-brand"
+              aria-label="Instagram"
+            >
+              <Instagram
+                size={22}
+                className="text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors"
+              />
+            </Link>
+            <Link href="https://facebook.com/your-brand" aria-label="Facebook">
+              <Facebook
+                size={22}
+                className="text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors"
+              />
+            </Link>
+          </div>
         </div>
       </div>
     </div>

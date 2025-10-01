@@ -1,5 +1,5 @@
 import { apiClient } from "../../api";
-import AllProducts from "./components/AllProduct";
+import Products from "./components/Product";
 
 interface ProductsPageProps {
   searchParams: { category?: string };
@@ -31,7 +31,7 @@ export default async function ProductsPage({
 
     return (
       <div className="mt-[8rem] lg:mt-[10rem]">
-        <AllProducts
+        <Products
           categories={categoriesAndFeatured?.categories ?? []}
           initialProducts={initialProducts}
           initialCategory={categorySlug}

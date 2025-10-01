@@ -3,3 +3,5 @@ export interface ErrorResponse {
   message?: string;
   [key: string]: any; // Allow other dynamic error fields
 }
+
+

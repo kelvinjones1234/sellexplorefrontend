@@ -1,12 +1,10 @@
-// The file path is likely src/app/component/Navbar.tsx based on your other files
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Nav from "./Nav";
 import MobileNav from "./Mobile";
-import { useBookmark } from "@/context/BookmarkContext";
 import { useTheme } from "next-themes";
-import FilteredItems from "../../[vendor]/components/FilteredItems";
+import FilteredItems from "../../[store]/components/FilteredItems";
 import { apiClient } from "../../api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { FilteredProductResponse } from "../../types";
@@ -14,8 +12,6 @@ import { FilteredProductResponse } from "../../types";
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  // 1. Move state from Search component to here
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [searchResults, setSearchResults] = useState<
@@ -24,10 +20,8 @@ const Navbar: React.FC = () => {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const { totalItems, toggleBookmark } = useBookmark();
   const { theme, setTheme } = useTheme();
 
-  // 2. Move data fetching logic here
   useEffect(() => {
     if (!debouncedSearchQuery) {
       setSearchResults({ count: 0, results: [] });
@@ -70,10 +64,9 @@ const Navbar: React.FC = () => {
           onClick={() => setIsSearchOpen(false)}
         >
           <div
-            className="bg-[var(--color-bg)] pt-[6rem]" // Adjusted padding top
+            className="bg-[var(--color-bg)] pt-[6rem]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 3. This component now receives the correct state */}
             <FilteredItems
               products={searchResults}
               isLoading={isSearchLoading}
@@ -88,20 +81,16 @@ const Navbar: React.FC = () => {
           <Nav
             theme={theme ?? "system"}
             toggleTheme={toggleTheme}
-            totalItems={totalItems}
-            toggleBookmark={toggleBookmark}
             toggleMobileMenu={toggleMobileMenu}
             isSearchOpen={isSearchOpen}
             setIsSearchOpen={(val) => {
               setIsSearchOpen(val);
-              // 4. Reset search when closing the panel
               if (!val) {
                 setSearchQuery("");
                 setSearchResults({ count: 0, results: [] });
                 setSearchError(null);
               }
             }}
-            // 5. Pass state down to Nav -> Search
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             isSearchLoading={isSearchLoading}
@@ -109,11 +98,7 @@ const Navbar: React.FC = () => {
         </div>
       </header>
 
-      <MobileNav
-        isOpen={isMobileMenuOpen}
-        toggleMenu={toggleMobileMenu}
-        totalItems={totalItems}
-      />
+      <MobileNav isOpen={isMobileMenuOpen} toggleMenu={toggleMobileMenu} />
     </>
   );
 };

@@ -1,8 +1,11 @@
-// PRODUCT MAIN PAGE
-// PRODUCT MAIN PAGE
-
 import { API_BASE } from "@/constant/baseUrl";
-import { ErrorResponse, Product, Category } from "./types";
+import {
+  ErrorResponse,
+  Product,
+  Category,
+  ProductOption,
+  OptionsNote,
+} from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || API_BASE;
 
@@ -17,6 +20,19 @@ export interface CategoryResponse {
   id: number;
   name: string;
   image: string;
+}
+
+interface Coupon {
+  id: number;
+  code: string;
+  discount_amount: string | null;
+  discount_percentage: string | null;
+  valid_from: string;
+  valid_until: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  products: number[];
 }
 
 type TokenChangeListener = (token: string | null) => void;
@@ -177,6 +193,62 @@ class APIClient {
     }
   }
 
+  // --- Coupon API methods ---
+  async getCoupons(
+    page = 1,
+    search = "",
+    page_size = 10
+  ): Promise<PaginatedResponse<Coupon>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: page_size.toString(),
+    });
+
+    if (search.trim()) {
+      params.append("search", search.trim());
+    }
+
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/coupons/?${params.toString()}`,
+      { method: "GET" }
+    );
+
+    return this.handleResponse<PaginatedResponse<Coupon>>(
+      response,
+      "Failed to fetch coupons"
+    );
+  }
+
+  async createCoupon(data: FormData): Promise<Coupon> {
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/coupons/`,
+      {
+        method: "POST",
+        body: data,
+      }
+    );
+    return this.handleResponse<Coupon>(response, "Failed to create coupon");
+  }
+
+  async updateCoupon(id: number, data: FormData): Promise<Coupon> {
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/coupons/${id}/`,
+      {
+        method: "PUT",
+        body: data,
+      }
+    );
+    return this.handleResponse<Coupon>(response, "Failed to update coupon");
+  }
+
+  async deleteCoupon(id: number): Promise<void> {
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/coupons/${id}/`,
+      { method: "DELETE" }
+    );
+    await this.handleResponse<void>(response, "Failed to delete coupon");
+  }
+
   // --- Product API methods ---
   async getProducts(
     page = 1,
@@ -203,8 +275,19 @@ class APIClient {
     );
   }
 
-  // --- Delete product API methods ---
+  // --- Coupon products ---
+  async getCouponProducts(): Promise<{ id: number; name: string }[]> {
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/coupon-items/`,
+      { method: "GET" }
+    );
+    return this.handleResponse<{ id: number; name: string }[]>(
+      response,
+      "Failed to fetch coupon products"
+    );
+  }
 
+  // --- Delete product API methods ---
   async deleteProduct(id: number | string): Promise<void> {
     const response = await this.fetchWithTimeout(
       `${API_BASE_URL}/products/${id}/`,
@@ -302,7 +385,6 @@ class APIClient {
       formData.append("image", image);
     }
 
-    // Remove Content-Type header for FormData to set boundary automatically
     const response = await this.fetchWithTimeout(
       `${API_BASE_URL}/categories/`,
       {
@@ -332,7 +414,6 @@ class APIClient {
       formData.append("image", image);
     }
 
-    // Remove Content-Type header for FormData to set boundary automatically
     const response = await this.fetchWithTimeout(
       `${API_BASE_URL}/categories/${id}/`,
       {
@@ -449,48 +530,135 @@ class APIClient {
       throw new Error(errorMessage);
     }
   }
- 
-  async updateProductOptions(
-    productId: number,
-    optionsFormData: FormData
-  ): Promise<any[]> {
-    console.log("Options FormData contents:");
-    for (let [key, value] of optionsFormData.entries()) {
-      console.log(`FormData entry: ${key} = ${value}`);
-    }
 
+  async updateProductOption(
+    optionId: number,
+    data: Partial<ProductOption>
+  ): Promise<ProductOption> {
     const response = await this.fetchWithTimeout(
-      `${API_BASE_URL}/products/${productId}/options/update/`,
+      `${API_BASE_URL}/product-options/${optionId}/`,
       {
         method: "PUT",
-        body: optionsFormData,
-        headers: this.accessToken
-          ? { Authorization: `Bearer ${this.accessToken}` }
-          : {},
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.accessToken}`,
+        },
       }
     );
-    return this.handleResponse<any[]>(
+    return this.handleResponse<ProductOption>(
       response,
-      "Failed to update product options"
+      "Failed to update product option"
     );
   }
 
-  // Add this method to your apiClient class/object
+  async createProductOption(data: any): Promise<ProductOption> {
+    console.log("createProductOption payload:", data);
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/product-options/`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      }
+    );
+    return this.handleResponse<ProductOption>(
+      response,
+      "Failed to create product option"
+    );
+  }
 
-  async getProduct(productId: number): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/products/${productId}/`, {
+  async createOptionsNote(data: {
+    note: string;
+    product: number;
+  }): Promise<OptionsNote> {
+    console.log("createOptionsNote payload:", data);
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/options-notes/`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      }
+    );
+    return this.handleResponse<OptionsNote>(
+      response,
+      "Failed to create options note"
+    );
+  }
+
+
+  async getCoupon(id: number): Promise<Coupon> {
+  const response = await this.fetchWithTimeout(
+    `${API_BASE_URL}/coupons/${id}/`,
+    {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${this.accessToken}`,
         "Content-Type": "application/json",
+        Authorization: this.accessToken
+          ? `Bearer ${this.accessToken}`
+          : "",
       },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch product: ${response.statusText}`);
     }
+  );
 
-    return response.json();
+  return this.handleResponse<Coupon>(response, "Failed to fetch coupon");
+}
+
+  async updateOptionsNote(
+    noteId: number,
+    data: { note: string; product: number }
+  ): Promise<OptionsNote> {
+    console.log("updateOptionsNote payload:", data);
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/options-notes/${noteId}/`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      }
+    );
+    return this.handleResponse<OptionsNote>(
+      response,
+      "Failed to update options note"
+    );
+  }
+
+  async getProduct(productId: number): Promise<Product> {
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/products/${productId}/`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      }
+    );
+
+    return this.handleResponse<Product>(response, "Failed to fetch product");
+  }
+
+  async getOptionTemplates(): Promise<ProductOption[]> {
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/product-options/`,
+      {
+        method: "GET",
+      }
+    );
+    return this.handleResponse<ProductOption[]>(
+      response,
+      "Failed to fetch option templates"
+    );
   }
 
   /**

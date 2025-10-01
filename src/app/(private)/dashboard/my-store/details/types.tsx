@@ -56,7 +56,6 @@ export interface LocationDetails {
   country: string;
   state: string;
   address: string;
-  delivery: string;
 }
 
 export interface SocialLinks {

@@ -23,11 +23,11 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
   return (
     <div className={`relative ${margin || ""}`}>
       <div
-        className={`relative border rounded-2xl ${
+        className={`relative border border-[var(--color-border-default)] rounded-xl ${
           error
             ? "border-red-500"
             : isFocused
-            ? "border-[var(--color-primary)]"
+            ? "border-[var(--color-brand-primary)]"
             : "border-[var(--color-border)]"
         }`}
       >
@@ -50,8 +50,8 @@ const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
           htmlFor={name}
           className={`absolute duration-300 transform ${
             isFocused || value
-              ? "text-xs top-3 scale-75 -translate-y-1 z-10"
-              : "text-[.9rem] top-1/2 -translate-y-1/2"
+              ? "text-xs top-2 scale-75 -translate-y-1 z-10"
+              : "text-sm text-[var(--color-text-secondary)] top-1/2 -translate-y-1/2"
           } left-4 origin-[0] pointer-events-none`}
         >
           {placeholder}

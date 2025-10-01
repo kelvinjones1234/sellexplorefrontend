@@ -27,8 +27,8 @@ export default function Hero({
     return () => clearInterval(interval);
   }, [images.length]);
 
-  return (
-    <div className="relative w-full h-[500px] overflow-hidden">
+  return ( 
+    <div className="relative w-full h-[80vh] overflow-hidden">
       {images.map((src, index) => (
         <div
           key={index}

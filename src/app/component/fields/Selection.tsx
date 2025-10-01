@@ -8,7 +8,7 @@ interface Option {
   label: string;
   disabled?: boolean;
 }
-
+ 
 interface FloatingLabelSelectProps {
   name: string;
   value: string | number;
@@ -53,12 +53,12 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
   return (
     <div ref={wrapperRef} className={`relative ${margin || ""}`}>
       <div
-        className={`relative border rounded-2xl ${
+        className={`relative border border-[var(--color-border-strong)] rounded-2xl ${
           error
             ? "border-red-500"
             : isFocused || open
-            ? "border-[var(--color-primary)]"
-            : "border-[var(--color-border)]"
+            ? "border-[var(--color-brand-primary)]"
+            : "border-[var(--color-border-strong)]"
         }`}
       >
         {/* Trigger */}
@@ -85,7 +85,7 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
           className={`absolute left-4 transition-all duration-200 pointer-events-none ${
             isFocused || selected
               ? "text-xs top-2 text-[var(--color-primary)]"
-              : "text-sm top-1/2 -translate-y-1/2 text-gray-500"
+              : "text-sm top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
           }`}
         >
           {placeholder}
@@ -94,7 +94,7 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
         {/* Chevron */}
         <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
           <ChevronDown
-            className={`w-5 h-5 text-gray-500 transition-transform ${
+            className={`w-5 h-5 text-[var(--color-text-secondary)] transition-transform ${
               open ? "rotate-180" : ""
             }`}
           />
@@ -102,7 +102,7 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
 
         {/* Dropdown menu */}
         {open && (
-          <ul className="absolute z-20 mt-1 w-full bg-white dark:bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl shadow-lg max-h-48 overflow-y-auto">
+          <ul className="absolute z-20 mt-1 w-full bg-white dark:bg-[var(--color-bg)] border border-[var(--color-border-strong)] rounded-xl shadow-lg max-h-48 overflow-y-auto">
             {options.map((opt) => (
               <li key={opt.value}>
                 <button
@@ -114,7 +114,7 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-border-secondary)] ${
                     value === opt.value
-                      ? "bg-[var(--color-primary)] text-white"
+                      ? "bg-[var(--color-brand-primary)] text-white"
                       : ""
                   } ${opt.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                 >

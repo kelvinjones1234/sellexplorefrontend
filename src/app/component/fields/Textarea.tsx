@@ -30,7 +30,7 @@ const FloatingLabelTextarea: React.FC<FloatingLabelTextareaProps> = ({
           ${
             error
               ? "border-red-500"
-              : "border-[var(--color-border)] focus:border-[var(--color-primary)]"
+              : "border-[var(--color-border-default)] focus:border-[var(--color-brand-primary)]"
           }`}
       />
       <label
@@ -41,7 +41,7 @@ const FloatingLabelTextarea: React.FC<FloatingLabelTextareaProps> = ({
           ${
             value
               ? "top-3 -translate-y-1 scale-75"
-              : "text-[.9rem] text-gray-500"
+              : "text-sm text-[var(--color-text-secondary)]"
           }
           peer-focus:text-[var(--color-primary)]`}
       >

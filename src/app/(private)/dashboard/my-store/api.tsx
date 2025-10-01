@@ -16,7 +16,7 @@ class APIClient {
 
   static getInstance(): APIClient {
     if (!APIClient.instance) {
-      APIClient.instance = new APIClient();
+      APIClient.instance = new APIClient(); 
     }
     return APIClient.instance;
   }

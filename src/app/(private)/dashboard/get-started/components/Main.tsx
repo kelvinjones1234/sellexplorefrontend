@@ -129,11 +129,11 @@ const Main = () => {
   const progressPercentage = Math.round((completedCount / totalCount) * 100);
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-primary)]">
       {/* Header */}
-      <header className="sticky top-0 bg-[var(--color-bg)] border-b border-[var(--color-border-secondary)] px-4 py-3">
+      <header className="sticky top-0 bg-[var(--color-bg-primary)] border-b border-[var(--color-border-default)] px-4 py-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-[var(--color-heading)]">
+          <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">
             Get Started
           </h1>
           <div className="flex items-center gap-2">
@@ -149,7 +149,7 @@ const Main = () => {
       <div className="px-4 py-6 lg:py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-2xl lg:text-3xl font-bold text-[var(--color-heading)] mb-2 flex items-center gap-2">
+          <h1 className="text-2xl lg:text-3xl font-bold text-[var(--color-text-primary)] mb-2 flex items-center gap-2">
             Hi Praise
             <span className="text-2xl">👋</span>
           </h1>
@@ -163,7 +163,7 @@ const Main = () => {
           {/* Left Column - Setup Progress */}
           <div className="md:col-span-2 space-y-6">
             {/* Finish Setting Up Section */}
-            <div className="bg-[var(--color-bg)] rounded-xl shadow-sm border border-[var(--color-border-secondary)] overflow-hidden">
+            <div className="bg-[var(--color-bg-primary)] rounded-xl shadow-sm border border-[var(--color-border-default)] overflow-hidden">
               <button
                 onClick={() => toggleSection("finish-setup")}
                 className="w-full flex items-center justify-between p-4 lg:p-6 hover:bg-[var(--color-surface)] transition-colors"
@@ -172,7 +172,7 @@ const Main = () => {
                   <div className="w-8 h-8 bg-[var(--color-success-bg)] rounded-full flex items-center justify-center">
                     <Check className="w-5 h-5 text-[var(--color-success)]" />
                   </div>
-                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                     Finish setting up
                   </h2>
                 </div>
@@ -186,14 +186,14 @@ const Main = () => {
               </button>
 
               {expandedSections.includes("finish-setup") && (
-                <div className="border-t border-[var(--color-border-secondary)] p-4 lg:p-6">
+                <div className="border-t border-[var(--color-border-default)] p-4 lg:p-6">
                   {/* Progress Bar */}
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-[var(--color-text)]">
                         Your Setup Progress
                       </span>
-                      <span className="text-sm font-medium text-[var(--color-heading)]">
+                      <span className="text-sm font-medium text-[var(--color-text-primary)]">
                         {progressPercentage}% complete
                       </span>
                     </div>
@@ -223,7 +223,7 @@ const Main = () => {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-[var(--color-heading)] text-sm">
+                          <h3 className="font-medium text-[var(--color-text-primary)] text-sm">
                             {item.title}
                           </h3>
                           {item.description && (
@@ -237,8 +237,8 @@ const Main = () => {
                           <button
                             className={`flex-shrink-0 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg text-xs font-medium transition-colors ${
                               item.actionType === "primary"
-                                ? "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
-                                : "border border-[var(--color-border-secondary)] text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)]"
+                                ? "bg-[var(--color-brand-primary)] text-[var(--color-text-primary)] hover:bg-[var(--color-brand-hover)]"
+                                : "border border-[var(--color-border-default)] text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)]"
                             }`}
                           >
                             {item.action}
@@ -258,7 +258,7 @@ const Main = () => {
             </div>
 
             {/* Learn How It Works Section */}
-            <div className="bg-[var(--color-bg)] rounded-xl shadow-sm border border-[var(--color-border-secondary)] overflow-hidden">
+            <div className="bg-[var(--color-bg-primary)] rounded-xl shadow-sm border border-[var(--color-border-default)] overflow-hidden">
               <button
                 onClick={() => toggleSection("learn-how")}
                 className="w-full flex items-center justify-between p-4 lg:p-6 hover:bg-[var(--color-surface)] transition-colors"
@@ -267,7 +267,7 @@ const Main = () => {
                   <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                     <span className="text-orange-600 font-bold">🎯</span>
                   </div>
-                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                     Learn how it works on Sellexplore
                   </h2>
                 </div>
@@ -283,14 +283,14 @@ const Main = () => {
           {/* Right Column - Help Sections */}
           <div className="space-y-6">
             {/* FAQ Section */}
-            <div className="bg-[var(--color-bg)] rounded-xl shadow-sm border border-[var(--color-border-secondary)] p-4 lg:p-6">
+            <div className="bg-[var(--color-bg-primary)] rounded-xl shadow-sm border border-[var(--color-border-default)] p-4 lg:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 bg-[var(--color-primary-bg)] rounded-lg flex items-center justify-center">
                   <span className="text-[var(--color-primary)] text-sm">
                     📋
                   </span>
                 </div>
-                <h3 className="font-semibold text-[var(--color-heading)]">
+                <h3 className="font-semibold text-[var(--color-text-primary)]">
                   Frequently asked questions
                 </h3>
                 <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)] ml-auto" />
@@ -311,7 +311,7 @@ const Main = () => {
             </div>
 
             {/* Got Questions Section */}
-            <div className="bg-[var(--color-bg)] rounded-xl shadow-sm border border-[var(--color-border-secondary)] p-4 lg:p-6">
+            <div className="bg-[var(--color-bg-primary)] rounded-xl shadow-sm border border-[var(--color-border-default)] p-4 lg:p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-10 h-10 bg-[var(--color-primary-bg)] rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-[var(--color-primary)] text-lg">
@@ -319,7 +319,7 @@ const Main = () => {
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[var(--color-heading)] mb-2">
+                  <h3 className="font-semibold text-[var(--color-text-primary)] mb-2">
                     Got Questions? Find answers fast!
                   </h3>
                   <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
@@ -336,13 +336,13 @@ const Main = () => {
             </div>
 
             {/* Need Help Section */}
-            <div className="bg-[var(--color-bg)] rounded-xl shadow-sm border border-[var(--color-border-secondary)] p-4 lg:p-6">
+            <div className="bg-[var(--color-bg-primary)] rounded-xl shadow-sm border border-[var(--color-border-default)] p-4 lg:p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-10 h-10 bg-[var(--color-primary-bg)] rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-[var(--color-primary)] text-lg">🛟</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[var(--color-heading)] mb-2">
+                  <h3 className="font-semibold text-[var(--color-text-primary)] mb-2">
                     Need help? We're always here
                   </h3>
                   <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
