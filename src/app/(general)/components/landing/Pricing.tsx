@@ -104,7 +104,7 @@ const Pricing = () => {
     <section className="relative z-10 mx-auto py-12 container-padding" id="pricing">
       <div className="text-center mb-8">
         <h1 className="text-[clamp(2rem,6.5vw,3rem)] font-semibold leading-tight">
-          Save up to <span className="text-[var(--color-primary)]">20%</span> on
+          Save up to <span className="text-[var(--color-brand-primary)]">20%</span> on
           a yearly plan
         </h1>
       </div>
@@ -117,15 +117,14 @@ const Pricing = () => {
             onClick={() => setBillingCycle(cycle)}
             className={`px-6 py-2 rounded-full mx-2 capitalize ${
               billingCycle === cycle
-                ? "bg-[var(--color-primary)] text-white"
-                : "bg-gray-800 text-gray-300"
+                ? "bg-[var(--color-brand-primary)] text-[var(--color-on-brand)]"
+                : "bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]"
             }`}
           >
             {cycle}
           </button>
         ))}
       </div>
-
       {/* Pricing Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
         {plans[billingCycle].map((plan, i) => (
@@ -147,7 +146,7 @@ const Pricing = () => {
                 <li key={idx}>• {f}</li>
               ))}
             </ul>
-            <button className="bg-[var(--color-primary)] py-3 rounded-full font-medium hover:opacity-90 mt-auto">
+            <button className="bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] py-3 rounded-full font-medium hover:opacity-90 mt-auto">
               {plan.action}
             </button>
           </div>

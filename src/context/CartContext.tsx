@@ -1,5 +1,4 @@
-"use client"
-
+"use client";
 
 import {
   createContext,
@@ -38,7 +37,18 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedCart = localStorage.getItem("shoppingCart");
+        return storedCart ? JSON.parse(storedCart) : [];
+      } catch (error) {
+        console.error("Failed to parse cart from localStorage", error);
+        return [];
+      }
+    }
+    return [];
+  });
 
   // Effect to load cart from localStorage on the client-side
   useEffect(() => {
@@ -48,7 +58,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setCart(JSON.parse(storedCart));
       }
     } catch (error) {
-      console.error("Failed to parse cart from localStorage", error); 
+      console.error("Failed to parse cart from localStorage", error);
       // If parsing fails, start with an empty cart
       setCart([]);
     }
@@ -127,7 +137,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // Modified to count unique products based on product ID
   const getCartItemCount = () => {
     // Use a Set to get unique product IDs
-    const uniqueProductIds = new Set(cart.map(item => item.id));
+    const uniqueProductIds = new Set(cart.map((item) => item.id));
     return uniqueProductIds.size;
   };
 

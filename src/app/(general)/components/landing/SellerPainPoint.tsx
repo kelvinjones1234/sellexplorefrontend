@@ -2,12 +2,12 @@ import Image from "next/image";
 
 const SellerPainPoint = () => {
   return (
-    <section className="relative z-10 max-w-[1200px] top-[10rem] mx-auto px-4 sm:px-6">
+    <section className="relative z-10 max-w-[1200px] top-[8rem] mx-auto px-4 sm:px-6">
       <div className="px-4 carousel-section">
         <div className="relative">
           <h1 className="text-[clamp(2rem,6.5vw,3.5rem)] leading-[clamp(2.2rem,7vw,4rem)] font-semibold py-4 text-center">
             All you need to <br />
-            <span className="text-[var(--color-primary)]">sell and grow</span>
+            <span className="text-[var(--color-brand-primary)]">sell and grow</span>
           </h1>
 
           <div className="grid md:grid-cols-2 gap-[5rem] mt-5">
@@ -27,7 +27,7 @@ const SellerPainPoint = () => {
 
                 {/* Text Section */}
                 <div>
-                  <h2 className="text-2xl py-4 font-semibold text-[var(--color-text)]">
+                  <h2 className="text-2xl py-4 font-semibold text-[var(--color-text-primary)]">
                     Sell Smarter, Grow Faster
                   </h2>
                   <p className="text-[var(--color-text-secondary)]">
@@ -65,7 +65,7 @@ const SellerPainPoint = () => {
 
                 {/* Text Section */}
                 <div>
-                  <h2 className="text-2xl py-4 font-semibold text-[var(--color-text)]">
+                  <h2 className="text-2xl py-4 font-semibold text-[var(--color-text-primary)]">
                     Stay on Top of Orders & Customer Activity
                   </h2>
                   <p className="text-[var(--color-text-secondary)]">
@@ -103,7 +103,7 @@ const SellerPainPoint = () => {
 
                 {/* Text Section */}
                 <div>
-                  <h2 className="text-2xl py-4 font-semibold text-[var(--color-text)]">
+                  <h2 className="text-2xl py-4 font-semibold text-[var(--color-text-primary)]">
                     Receive payments without hassle
                   </h2>
                   <p className="text-[var(--color-text-secondary)]">
@@ -139,7 +139,7 @@ const SellerPainPoint = () => {
 
                 {/* Text Section */}
                 <div>
-                  <h2 className="text-2xl py-4 font-semibold text-[var(--color-text)]">
+                  <h2 className="text-2xl py-4 font-semibold text-[var(--color-text-primary)]">
                     Get product analytics and insight
                   </h2>
                   <p className="text-[var(--color-text-secondary)]">

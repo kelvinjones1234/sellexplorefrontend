@@ -13,6 +13,8 @@ import {
   X,
   Plus,
   Trash,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
 import FloatingLabelInput from "@/app/component/fields/Input";
 import FloatingLabelTextarea from "@/app/component/fields/Textarea";
@@ -30,6 +32,8 @@ import {
 } from "../types";
 import { apiClient } from "../api";
 import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
+import { toast } from "react-toastify";
 
 // --- Data for Selections ---
 const countryOptions: Option[] = [
@@ -93,7 +97,18 @@ const BasicTab: React.FC<BasicTabProps> = ({
   basicDetails,
   setBasicDetails,
 }) => (
-  <div className="space-y-6">
+  <div className="space-y-6 text-[var(--color-text-secondary)]">
+    <div className="text-center mb-8">
+      <div className="w-16 h-16 bg-[var(--card-bg-1)] rounded-full flex items-center justify-center mx-auto mb-4">
+        <StoreIcon className="w-8 h-8 text-[var(--card-text-1)]" />
+      </div>
+      <h3 className="text-lg font-semibold text-[var(--color-heading)] mb-2">
+        Basic Details
+      </h3>
+      <p className="text-[var(--color-text-secondary)]">
+        Configure your store's basic information
+      </p>
+    </div>
     <FloatingLabelInput
       type="text"
       name="name"
@@ -132,14 +147,25 @@ const LocationTab: React.FC<LocationTabProps> = ({
   locationDetails,
   setLocationDetails,
 }) => (
-  <div className="space-y-6">
+  <div className="space-y-6 text-[var(--color-text-secondary)]">
+    <div className="text-center mb-8">
+      <div className="w-16 h-16 bg-[var(--card-bg-2)] rounded-full flex items-center justify-center mx-auto mb-4">
+        <MapPin className="w-8 h-8 text-[var(--card-text-2)]" />
+      </div>
+      <h3 className="text-lg font-semibold text-[var(--color-heading)] mb-2">
+        Location Details
+      </h3>
+      <p className="text-[var(--color-text-secondary)]">
+        Set your store's location information
+      </p>
+    </div>
     <FloatingLabelSelect
       name="country"
       value={locationDetails.country}
       onChange={(value) =>
         setLocationDetails((prev) => ({
           ...prev,
-          country: value as string, // cast if needed
+          country: value as string,
           state: "",
         }))
       }
@@ -220,7 +246,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
           setTempProductTypes(productTypes);
           setIsProductModalOpen(true);
         }}
-        className="px-6 text-sm py-3 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:bg-[var(--color-primary-hover)] transition-colors mt-4"
+        className="px-6 text-sm py-3 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-xl font-medium hover:bg-[var(--color-brand-hover)] transition-colors my-6"
       >
         Select Product Types
       </button>
@@ -242,14 +268,14 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
 
       {isProductModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[var(--color-bg)] p-6 rounded-2xl max-w-md w-full relative">
+          <div className="bg-[var(--color-bg-surface)] p-6 rounded-3xl max-w-md w-full relative">
             <button
               onClick={() => setIsProductModalOpen(false)}
-              className="absolute top-4 right-4 border border-[var(--color-border)] p-1 rounded-full text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+              className="absolute top-4 right-4 border hover:bg-[var(--color-bg-secondary)] border-[var(--color-border-strong)] p-1 rounded-full text-[var(--color-text-secondary)] transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
-            <h3 className="text-sm text-[var(--color-text)] font-semibold mb-4">
+            <h3 className="text-md text-[var(--color-text-primary)] font-semibold mb-4">
               Select Product Types
             </h3>
             <div className="mb-5">
@@ -261,15 +287,15 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                 placeholder="Search items"
               />
             </div>
-            <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
+            <div className="flex flex-wrap gap-4 max-h-60 overflow-y-auto">
               {filteredProductOptions.map((option) => (
                 <button
                   key={option}
                   onClick={() => handleSelectProduct(option)}
-                  className={`px-3 py-1 text-sm text-[var(--color-text-secondary)] rounded-full transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
                     tempProductTypes.includes(option)
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg-secondary-hover)]"
+                      ? "bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] hover:bg-[var(--color-brand-hover)]"
+                      : "bg-[var(--color-bg-secondary)] border border-[var(--color-border-default)] hover:bg-[var(--color-bg-secondary-hover)]"
                   }`}
                 >
                   {option}
@@ -281,7 +307,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                 setProductTypes(tempProductTypes);
                 setIsProductModalOpen(false);
               }}
-              className="w-full mt-6 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg font-medium text-sm"
+              className="w-full mt-6 px-4 py-4 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] hover:bg-[var(--color-brand-hover)] rounded-xl font-medium text-sm"
             >
               Continue
             </button>
@@ -295,7 +321,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
 interface AboutTabProps {
   aboutUs: AboutUs;
   setAboutUs: React.Dispatch<React.SetStateAction<AboutUs>>;
-  aboutImages: (File | string)[];
+  aboutImages: (File | string | null)[];
   handleImageUpload: (
     e: React.ChangeEvent<HTMLInputElement>,
     index?: number
@@ -310,7 +336,18 @@ const AboutTab: React.FC<AboutTabProps> = ({
   handleImageUpload,
   removeImage,
 }) => (
-  <div className="space-y-8">
+  <div className="space-y-8 text-[var(--color-text-secondary)]">
+    <div className="text-center mb-8">
+      <div className="w-16 h-16 bg-[var(--card-bg-1)] rounded-full flex items-center justify-center mx-auto mb-4">
+        <Type className="w-8 h-8 text-[var(--card-text-1)]" />
+      </div>
+      <h3 className="text-lg font-semibold text-[var(--color-heading)] mb-2">
+        About Us
+      </h3>
+      <p className="text-[var(--color-text-secondary)]">
+        Share your store's story and supporting images
+      </p>
+    </div>
     <FloatingLabelTextarea
       name="story"
       value={aboutUs.story}
@@ -320,46 +357,59 @@ const AboutTab: React.FC<AboutTabProps> = ({
       placeholder="Your Story"
     />
     <div>
-      <h3 className="font-medium text-sm text-[var(--color-text)] mb-4">
+      <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-4">
         Supporting Images
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {aboutImages.map((image, index) => (
           <div key={index} className="relative group">
-            <img
-              src={
-                typeof image === "string" ? image : URL.createObjectURL(image)
-              }
-              alt={`Store image ${index + 1}`}
-              className="w-full h-32 object-cover rounded-lg border border-[var(--color-border)] cursor-pointer"
-              onClick={() => {
-                const input = document.createElement("input");
-                input.type = "file";
-                input.accept = "image/*";
-                input.onchange = (e) => handleImageUpload(e as any, index);
-                input.click();
-              }}
-            />
+            {image ? (
+              <>
+                <img
+                  src={
+                    typeof image === "string"
+                      ? image
+                      : URL.createObjectURL(image)
+                  }
+                  alt={`Store image ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-xl border border-[var(--color-border-default)] cursor-pointer"
+                  onClick={() => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = "image/*";
+                    input.onchange = (e: any) => handleImageUpload(e, index);
+                    input.click();
+                  }}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeImage(index);
+                  }}
+                  className="absolute top-2 right-2 bg-red-500/80 bg-red-500 text-white rounded-full p-1 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-[var(--color-border-default)] rounded-xl cursor-pointer hover:border-[var(--color-border-strong)] transition-colors">
+                <Plus className="w-8 h-8 text-[var(--color-text-muted)] mb-2" />
+                <span className="text-sm text-[var(--color-text-muted)]">
+                  Upload Image
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, index)}
+                  className="hidden"
+                />
+              </label>
+            )}
           </div>
         ))}
-        {aboutImages.length < 3 && (
-          <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:border-[var(--color-border-strong)] transition-colors">
-            <Upload className="w-8 h-8 text-[var(--color-text-muted)] mb-2" />
-            <span className="text-sm text-[var(--color-text-muted)]">
-              Upload Image
-            </span>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={(e) => handleImageUpload(e)}
-              className="hidden"
-            />
-          </label>
-        )}
       </div>
-      <p className="text-sm text-[var(--color-text-muted)]">
-        {aboutImages.length}/3 images uploaded
+      <p className="text-sm text-[var(--color-text-secondary)]">
+        {aboutImages.filter((img) => img !== null).length}/3 images uploaded
       </p>
     </div>
   </div>
@@ -374,7 +424,18 @@ const SocialTab: React.FC<SocialTabProps> = ({
   socialLinks,
   setSocialLinks,
 }) => (
-  <div className="space-y-6">
+  <div className="space-y-6 text-[var(--color-text-secondary)]">
+    <div className="text-center mb-8">
+      <div className="w-16 h-16 bg-[var(--card-bg-2)] rounded-full flex items-center justify-center mx-auto mb-4">
+        <LinkIcon className="w-8 h-8 text-[var(--card-text-2)]" />
+      </div>
+      <h3 className="text-lg font-semibold text-[var(--color-heading)] mb-2">
+        Social Links
+      </h3>
+      <p className="text-[var(--color-text-secondary)]">
+        Add your social media profiles
+      </p>
+    </div>
     {Object.keys(socialLinks).map((platform) => (
       <div key={platform}>
         <FloatingLabelInput
@@ -392,7 +453,7 @@ const SocialTab: React.FC<SocialTabProps> = ({
           } Username`}
         />
         {socialLinks[platform as keyof SocialLinks] && (
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">
+          <p className="text-sm text-[var(--color-text-secondary)] mt-1">
             Link: https://www.{platform}.com/
             {socialLinks[platform as keyof SocialLinks]}
           </p>
@@ -408,7 +469,18 @@ interface ExtraTabProps {
 }
 
 const ExtraTab: React.FC<ExtraTabProps> = ({ extraInfo, setExtraInfo }) => (
-  <div className="space-y-6">
+  <div className="space-y-6 text-[var(--color-text-secondary)]">
+    <div className="text-center mb-8">
+      <div className="w-16 h-16 bg-[var(--card-bg-3)] rounded-full flex items-center justify-center mx-auto mb-4">
+        <Info className="w-8 h-8 text-[var(--card-text-3)]" />
+      </div>
+      <h3 className="text-lg font-semibold text-[var(--color-heading)] mb-2">
+        Extra Info
+      </h3>
+      <p className="text-[var(--color-text-secondary)]">
+        Additional store policies and details
+      </p>
+    </div>
     <FloatingLabelInput
       type="text"
       name="deliveryTime"
@@ -451,10 +523,21 @@ const FaqsTab: React.FC<FaqsTabProps> = ({
   removeFaq,
   addLocalFaq,
 }) => (
-  <div className="space-y-6">
+  <div className="space-y-6 text-[var(--color-text-secondary)]">
+    <div className="text-center mb-8">
+      <div className="w-16 h-16 bg-[var(--card-bg-1)] rounded-full flex items-center justify-center mx-auto mb-4">
+        <HelpCircle className="w-8 h-8 text-[var(--card-text-1)]" />
+      </div>
+      <h3 className="text-lg font-semibold text-[var(--color-heading)] mb-2">
+        FAQs
+      </h3>
+      <p className="text-[var(--color-text-secondary)]">
+        Manage your store's frequently asked questions
+      </p>
+    </div>
     <button
       onClick={addLocalFaq}
-      className="flex items-center gap-2 font-medium text-sm px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg"
+      className="flex items-center gap-2 font-medium text-sm px-4 py-2 bg-[var(--color-brand-primary)] text-[var(--color-on brand)] rounded-lg"
     >
       <Plus className="w-4 h-4" />
       Add FAQ
@@ -464,7 +547,7 @@ const FaqsTab: React.FC<FaqsTabProps> = ({
         {faqs.map((faq) => (
           <div
             key={faq.id}
-            className="border border-[var(--color-border)] rounded-lg p-4 space-y-4"
+            className="border border-[var(--color-border-default)] rounded-xl p-4 space-y-4"
           >
             <FloatingLabelInput
               type="text"
@@ -495,7 +578,7 @@ const FaqsTab: React.FC<FaqsTabProps> = ({
         {localFaqs.map((faq) => (
           <div
             key={faq.tempId}
-            className="border border-[var(--color-border)] rounded-lg p-4 space-y-4"
+            className="border border-[var(--color-border-default)] rounded-xl p-4 space-y-4"
           >
             <FloatingLabelInput
               type="text"
@@ -535,12 +618,7 @@ const FaqsTab: React.FC<FaqsTabProps> = ({
 // --- Main Component ---
 const Main: React.FC = () => {
   const { isAuthenticated, accessToken, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("activeTab") || "basic";
-    }
-    return "basic";
-  });
+  const [activeTab, setActiveTab] = useState<string>("basic");
   const [basicDetails, setBasicDetails] = useState<BasicDetails>({
     phone: "",
     name: "",
@@ -556,7 +634,9 @@ const Main: React.FC = () => {
   const [isProductModalOpen, setIsProductModalOpen] = useState<boolean>(false);
   const [tempProductTypes, setTempProductTypes] = useState<string[]>([]);
   const [aboutUs, setAboutUs] = useState<AboutUs>({ story: "" });
-  const [aboutImages, setAboutImages] = useState<(File | string)[]>([]);
+  const [aboutImages, setAboutImages] = useState<(File | string | null)[]>(
+    Array(3).fill(null)
+  );
   const [socialLinks, setSocialLinks] = useState<SocialLinks>({
     twitter: "",
     facebook: "",
@@ -571,48 +651,45 @@ const Main: React.FC = () => {
   const [faqs, setFaqs] = useState<StoreFAQ[]>([]);
   const [localFaqs, setLocalFaqs] = useState<LocalFAQ[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  // --- Initialize component ---
+  // Initialize active tab from localStorage only on client side
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsInitialized(true);
-    }, 100);
-    return () => clearTimeout(timer);
+    const savedTab = localStorage.getItem("activeTab");
+    if (savedTab) {
+      setActiveTab(savedTab);
+    }
   }, []);
 
-  // --- Update API client token ---
+  // Update API client token
   useEffect(() => {
     if (accessToken) {
       apiClient.setAccessToken(accessToken);
     }
   }, [accessToken]);
 
-  // --- Save active tab to localStorage ---
+  // Save active tab to localStorage
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("activeTab", activeTab);
-    }
+    localStorage.setItem("activeTab", activeTab);
   }, [activeTab]);
 
-  // --- Check authentication ---
+  // Check authentication
   useEffect(() => {
-    if (isInitialized && !isAuthenticated) {
+    if (!isAuthenticated) {
       setError("Please log in to access this page.");
       setLoading(false);
     }
-  }, [isInitialized, isAuthenticated]);
+  }, [isAuthenticated]);
 
-  // --- Load store + FAQs ---
+  // Load store + FAQs
   useEffect(() => {
-    if (!isInitialized || !isAuthenticated) return;
+    if (!isAuthenticated) return;
 
     const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-
       try {
+        setLoading(true);
+        setError(null);
         const store = await apiClient.getStore();
         setBasicDetails({
           name: store.name || "",
@@ -638,17 +715,17 @@ const Main: React.FC = () => {
           deliveryTime: store.delivery_time || "",
           policy: store.policy || "",
         });
-        const images = [
-          store.image_one,
-          store.image_two,
-          store.image_three,
-        ].filter((img): img is string => !!img);
-        setAboutImages(images);
+        setAboutImages([
+          store.image_one || null,
+          store.image_two || null,
+          store.image_three || null,
+        ]);
         const faqData = await apiClient.getFAQs();
         setFaqs(faqData);
       } catch (err: any) {
-        console.error("Failed to fetch store:", err);
-        setError(err.message || "Failed to fetch store data");
+        const errorMessage = err.message || "Failed to load store data";
+        setError(errorMessage);
+        toast.error(errorMessage);
         if (err.status === 401) {
           setError("Session expired. Please log in again.");
           logout();
@@ -658,32 +735,50 @@ const Main: React.FC = () => {
       }
     };
     fetchData();
-  }, [isInitialized, isAuthenticated, logout]);
+  }, [isAuthenticated, logout]);
 
-  // --- Image upload handler ---
   const handleImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
     index?: number
   ) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (e.g., 5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(`File ${file.name} is too large. Maximum size is 5MB.`);
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error(`File ${file.name} is not a valid image.`);
+      return;
+    }
 
     setAboutImages((prev) => {
+      const newImages = [...prev];
       if (index !== undefined) {
-        const newImages = [...prev];
-        newImages[index] = files[0];
-        return newImages;
+        newImages[index] = file;
       } else {
-        return [...prev, ...files].slice(0, 3);
+        const availableIndex = newImages.findIndex((img) => img === null);
+        if (availableIndex !== -1) {
+          newImages[availableIndex] = file;
+        }
       }
+      return newImages;
     });
   };
 
   const removeImage = (index: number) => {
-    setAboutImages((prev) => prev.filter((_, i) => i !== index));
+    setAboutImages((prev) => {
+      const newImages = [...prev];
+      newImages[index] = null;
+      return newImages;
+    });
   };
 
-  // --- FAQ handlers ---
+  // FAQ handlers
   const addLocalFaq = () => {
     const newFaq: LocalFAQ = {
       tempId: `temp-${Date.now()}-${Math.random()}`,
@@ -726,8 +821,9 @@ const Main: React.FC = () => {
         await apiClient.deleteFAQ(id as number);
         setFaqs((prev) => prev.filter((f) => f.id !== id));
       } catch (err: any) {
-        console.error("Failed to delete FAQ:", err);
-        setError(err.message || "Failed to delete FAQ");
+        const errorMessage = err.message || "Failed to delete FAQ";
+        setError(errorMessage);
+        toast.error(errorMessage);
         if (err.status === 401) {
           setError("Session expired. Please log in again.");
           logout();
@@ -736,18 +832,16 @@ const Main: React.FC = () => {
     }
   };
 
-  // --- Save / update store and FAQs ---
-  const handleSave = async () => {
+  const handleUpdate = async () => {
     if (!isAuthenticated || !accessToken) {
       setError("Authentication failed. Please log in again.");
       logout();
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     try {
+      setUpdating(true);
+
       // Update existing FAQs
       for (const faq of faqs) {
         if (faq.question || faq.answer) {
@@ -783,9 +877,13 @@ const Main: React.FC = () => {
       formData.append("story", aboutUs.story);
       const imgKeys = ["image_one", "image_two", "image_three"];
       aboutImages.forEach((image, idx) => {
+        const key = imgKeys[idx];
         if (image instanceof File) {
-          formData.append(imgKeys[idx], image);
+          formData.append(key, image);
+        } else if (image === null) {
+          formData.append(key, "");
         }
+        // else string, do not append to keep existing
       });
       formData.append("twitter", socialLinks.twitter);
       formData.append("facebook", socialLinks.facebook);
@@ -797,65 +895,49 @@ const Main: React.FC = () => {
 
       await apiClient.updateStoreWithImages(formData);
 
-      // Refresh images and FAQs from server
-      const store = await apiClient.getStore();
-      const images = [
-        store.image_one,
-        store.image_two,
-        store.image_three,
-      ].filter((img): img is string => !!img);
-      setAboutImages(images);
-      const faqData = await apiClient.getFAQs();
-      setFaqs(faqData);
-
-      alert("Store and FAQs updated successfully!");
+      toast.success("Store details updated successfully!");
     } catch (err: any) {
-      console.error("Update failed:", err);
-      setError(err.message || "Failed to update store or FAQs");
+      const errorMessage = err.message || "Failed to update store details";
+      setError(errorMessage);
+      toast.error(errorMessage);
       if (err.status === 401) {
         setError("Session expired. Please log in again.");
         logout();
       }
     } finally {
-      setLoading(false);
+      setUpdating(false);
     }
   };
 
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)] mx-auto mb-4"></div>
-          <p>Initializing...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">
-            {error || "Please log in to access this page."}
-          </p>
-          <button
-            onClick={() => (window.location.href = "/login")}
-            className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const handleCancel = () => {
+    // Refresh the page or reset to original values
+    window.location.reload();
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-brand-primary)]" />
+          <span className="text-[var(--color-text-secondary)]">
+            Loading store details...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)] mx-auto mb-4"></div>
-          <p>Loading data...</p>
+          <div className="text-red-500 mb-4">Error: {error}</div>
+          <Link
+            href="/login"
+            className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
+          >
+            Go to Login
+          </Link>
         </div>
       </div>
     );
@@ -865,58 +947,9 @@ const Main: React.FC = () => {
     return (
       <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-500 mb-4">Error: {error}</p>
+          <div className="text-red-500 mb-4">Error: {error}</div>
           <button
-            onClick={() => {
-              setError(null);
-              setLoading(true);
-              const fetchData = async () => {
-                try {
-                  const store = await apiClient.getStore();
-                  setBasicDetails({
-                    name: store.name || "",
-                    phone: store.phone || "",
-                    description: store.description || "",
-                  });
-                  setLocationDetails({
-                    country: store.country || "",
-                    state: store.state || "",
-                    address: store.address || "",
-                  });
-                  setBusinessCategory(store.business_category || "");
-                  setProductTypes(store.product_types || []);
-                  setAboutUs({ story: store.story || "" });
-                  setSocialLinks({
-                    twitter: store.twitter || "",
-                    facebook: store.facebook || "",
-                    tiktok: store.tiktok || "",
-                    snapchat: store.snapchat || "",
-                    instagram: store.instagram || "",
-                  });
-                  setExtraInfo({
-                    deliveryTime: store.delivery_time || "",
-                    policy: store.policy || "",
-                  });
-                  const images = [
-                    store.image_one,
-                    store.image_two,
-                    store.image_three,
-                  ].filter((img): img is string => !!img);
-                  setAboutImages(images);
-                  const faqData = await apiClient.getFAQs();
-                  setFaqs(faqData);
-                } catch (err: any) {
-                  setError(err.message || "Failed to fetch store data");
-                  if (err.status === 401) {
-                    setError("Session expired. Please log in again.");
-                    logout();
-                  }
-                } finally {
-                  setLoading(false);
-                }
-              };
-              fetchData();
-            }}
+            onClick={() => window.location.reload()}
             className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
           >
             Retry
@@ -927,28 +960,52 @@ const Main: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
-      <div className="px-4 pb-8">
-        <div className="bg-[var(--color-bg)] rounded-xl shadow-sm border-[var(--color-border)] mb-8">
-          <div className="border-b border-[var(--color-border)] rounded-t-xl overflow-hidden">
+    <div className="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)]">
+      {/* Header */}
+      <header className="sticky top-0 bg-[var(--color-bg-primary)] border-b border-[var(--color-border-default)] px-4 py-3 z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+            <Link href="http://localhost:3000/dashboard/my-store/">
+              <span className="font-medium text-[var(--color-text-primary)] hover:text-[var(--color-brand-primary)] transition-colors">
+                Store settings
+              </span>
+            </Link>
+            <span>›</span>
+            <span>Store Details</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--color-brand-primary)]">⚡</span>
+            <span className="text-sm font-medium text-[var(--color-text-secondary)]">
+              Quick Actions
+            </span>
+            <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
+          </div>
+        </div>
+      </header>
+
+      <div className="pb-8">
+        {/* Tab Navigation */}
+        <div className="bg-[var(--color-bg)] mb-8">
+          <div className="px-4 border-b border-[var(--color-border-default)] rounded-t-xl overflow-hidden">
             <nav className="flex overflow-x-auto no-scrollbar gap-6">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
-                    activeTab === tab.id
-                      ? "border-[var(--color-primary)] text-[var(--color-primary)]"
-                      : "border-transparent hover:text-[var(--color-primary)]"
-                  }`}
+                  className={`py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-all
+                    ${
+                      activeTab === tab.id
+                        ? "border-[var(--color-primary)] text-[var(--color-brand-primary)]"
+                        : "relative py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                    }`}
                 >
                   {tab.label}
-                </button>
+                </button> 
               ))}
             </nav>
           </div>
 
-          <div className="py-6 md:py-8 max-w-[900px] mx-auto">
+          <div className="py-6 md:py-8 px-4 max-w-[900px] mx-auto">
             {activeTab === "basic" && (
               <BasicTab
                 basicDetails={basicDetails}
@@ -1004,16 +1061,22 @@ const Main: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-col text-sm sm:flex-row gap-3 justify-end max-w-[900px] mx-auto">
-          <button className="px-6 py-3 border border-[var(--color-border)] text-[var(--color-text)] rounded-lg font-medium hover:bg-[var(--color-bg-secondary)] transition-colors">
+        {/* Action Buttons */}
+        <div className="flex max-w-[900px] mx-auto text-sm gap-3 justify-end px-4">
+          <button
+            className="px-6 py-3 text-[var(--color-text-secondary)] rounded-xl font-medium  hover:bg-[var(--color-bg-surface)] bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
+            onClick={handleCancel}
+            disabled={updating}
+          >
             Cancel
           </button>
           <button
-            disabled={loading}
-            onClick={handleSave}
-            className="px-6 py-3 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50"
+            className="px-6 py-3 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] justify-center rounded-xl font-medium hover:bg-[var(--color-brand-hover)] transition-colors disabled:opacity-50 flex items-center gap-2"
+            onClick={handleUpdate}
+            disabled={updating}
           >
-            {loading ? "Saving..." : "Update Details"}
+            {updating && <Loader2 className="w-4 h-4 animate-spin" />}
+            {updating ? "Updating..." : "Update Details"}
           </button>
         </div>
       </div>

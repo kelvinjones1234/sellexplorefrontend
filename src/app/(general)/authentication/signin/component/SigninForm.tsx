@@ -166,7 +166,7 @@ const SigninForm: React.FC = () => {
         <div className="flex items-center justify-between">
           <Link
             href={`/authentication/request-password-reset`}
-            className="text-sm hover:text-[var(--color-primary-hover)] text-[var(--color-primary)] transition-colors duration-200"
+            className="text-sm hover:text-[var(--color-brand-hover)] text-[var(--color-primary)] transition-colors duration-200"
           >
             Forgot your password?
           </Link>
@@ -176,7 +176,7 @@ const SigninForm: React.FC = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-semibold hover:bg-[var(--color-primary-hover)] bg-[var(--color-primary)] text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all duration-200"
+          className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-semibold hover:bg-[var(--color-brand-hover)] bg-[var(--color-brand-primary)] text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all duration-200"
         >
           {isLoading ? (
             <div className="">signing in...</div>

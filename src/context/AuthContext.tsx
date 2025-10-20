@@ -20,7 +20,7 @@ interface TokenResponse {
 interface LoginResponse {
   tokens: TokenResponse;
 }
-
+ 
 interface AuthContextType {
   register: (
     email: string,
@@ -37,13 +37,13 @@ interface AuthContextType {
   refreshToken: string | null;
   loading: boolean;
   isAuthenticated: boolean;
-  clearError: () => void;
+  clearError: () => void; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const REFRESH_INTERVAL = 14 * 60 * 1000; // 14 minutes
+const REFRESH_INTERVAL = 58 * 60 * 1000; // 14 minutes 
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,

@@ -1,5 +1,3 @@
-// CartModal.tsx
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,11 +7,12 @@ import FloatingLabelInput from "@/app/component/fields/Input";
 import FloatingLabelSelect from "@/app/component/fields/Selection";
 import FloatingLabelTextarea from "@/app/component/fields/Textarea";
 import { apiClient } from "../api";
+import { cartApi } from "../cartApi";
 
 interface CartModalProps {
   isOpen?: boolean;
   onClose?: () => void;
-}  
+}
 
 interface CouponData {
   code: string;
@@ -38,12 +37,11 @@ interface CartItem {
   quantity: number;
   effectivePrice?: number;
   itemDiscount?: number;
-  orderItemId?: number; // Add to track backend OrderItem ID
+  orderItemId?: number;
 }
 
 const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
-  if (!isOpen) return null;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [showItemDetails, setShowItemDetails] = useState<{
@@ -62,21 +60,29 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
     deliveryAddress: "",
     orderNotes: "",
   });
-  const [deliveryFee, setDeliveryFee] = useState<number>(4000);
+  const [formErrors, setFormErrors] = useState<Record<string, string | null>>({});
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
   const [deliveryAreaOptions, setDeliveryAreaOptions] = useState<
     { value: string; label: string; disabled?: boolean; deliveryFee?: number }[]
   >([{ value: "", label: "Select Delivery Area", disabled: true }]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [customerLoading, setCustomerLoading] = useState(false);
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<number | null>(null);
-  const [orderItems, setOrderItems] = useState<Record<string, number>>({}); // Map cartItemId to orderItemId
+  const [customerId, setCustomerId] = useState<number | null>(null);
+  const [orderItems, setOrderItems] = useState<Record<string, number>>({});
+  const [showSummaryDetails, setShowSummaryDetails] = useState(false);
 
   // Fetch delivery area options
   useEffect(() => {
     if (!isOpen) return;
 
     const fetchDeliveryAreas = async () => {
-      setIsLoading(true);
+      setDeliveryLoading(true);
       setError(null);
       try {
         const response = await apiClient.getDeliveryAreaOptions();
@@ -92,19 +98,24 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
         ];
         setDeliveryAreaOptions(options);
 
-        const firstValidOption = options.find((opt) => !opt.disabled);
-        if (firstValidOption) {
-          setFormData((prev) => ({
-            ...prev,
-            deliveryArea: firstValidOption.value,
-          }));
-          setDeliveryFee(firstValidOption.deliveryFee || 4000);
+        if (options.length > 1) {
+          const firstValidOption = options.find((opt) => !opt.disabled);
+          if (firstValidOption) {
+            setFormData((prev) => ({
+              ...prev,
+              deliveryArea: firstValidOption.value,
+            }));
+            setDeliveryFee(firstValidOption.deliveryFee || 0);
+          }
+        } else {
+          setDeliveryFee(0);
         }
       } catch (err) {
         console.error("Failed to fetch delivery areas:", err);
         setError("Failed to load delivery areas. Please try again.");
+        setDeliveryFee(0);
       } finally {
-        setIsLoading(false);
+        setDeliveryLoading(false);
       }
     };
 
@@ -117,7 +128,9 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       (opt) => opt.value === formData.deliveryArea
     );
     if (selectedOption && "deliveryFee" in selectedOption) {
-      setDeliveryFee(selectedOption.deliveryFee || 4000);
+      setDeliveryFee(selectedOption.deliveryFee || 0);
+    } else {
+      setDeliveryFee(0);
     }
   }, [formData.deliveryArea, deliveryAreaOptions]);
 
@@ -128,13 +141,11 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       return;
     }
 
-    setIsLoading(true);
+    setCouponLoading(true);
     setCouponError(null);
     setCouponMessage(null);
     try {
-      const response = await apiClient.applyCoupon(couponCode);
-      setAppliedCoupon(response);
-
+      const response = await cartApi.applyCoupon(couponCode);
       const applicableItems = cart.filter((item) =>
         response.products.some((p) => p.id === item.id)
       );
@@ -142,6 +153,10 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
         setCouponMessage(
           `Coupon "${response.code}" is valid but does not apply to any items in your cart.`
         );
+        setAppliedCoupon(null);
+      } else {
+        setAppliedCoupon(response);
+        setCouponMessage(null);
       }
 
       setCouponCode("");
@@ -150,46 +165,63 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       setAppliedCoupon(null);
       setCouponMessage(null);
     } finally {
-      setIsLoading(false);
+      setCouponLoading(false);
     }
   };
 
   // Calculate totals with coupon discount
   const calculateTotals = () => {
-    let subtotal = 0;
-    let discount = 0;
+    let rawSubtotal = 0;
+    let couponDiscount = 0;
+
+    const applicableCart = cart.filter((item) =>
+      appliedCoupon?.products.some((p) => p.id === item.id)
+    );
+
+    let applicableSubtotal = 0;
+    applicableCart.forEach((item) => {
+      const itemPrice = item.discount_price ?? item.price;
+      applicableSubtotal += itemPrice * item.quantity;
+    });
+
+    if (appliedCoupon && applicableCart.length > 0 && applicableSubtotal > 0) {
+      if (appliedCoupon.discount_type === "fixed") {
+        couponDiscount = appliedCoupon.discount_value;
+      } else if (appliedCoupon.discount_type === "percentage") {
+        couponDiscount =
+          (applicableSubtotal * appliedCoupon.discount_value) / 100;
+      }
+    }
 
     const updatedCart: CartItem[] = cart.map((item) => {
       let itemPrice = item.discount_price ?? item.price;
       let itemDiscount = 0;
 
-      if (
-        appliedCoupon &&
-        appliedCoupon.products.some((p) => p.id === item.id)
-      ) {
-        if (appliedCoupon.discount_type === "fixed") {
-          itemDiscount = appliedCoupon.discount_value / item.quantity;
-          itemPrice = Math.max(0, itemPrice - itemDiscount);
-          discount += appliedCoupon.discount_value;
-        } else if (appliedCoupon.discount_type === "percentage") {
-          itemDiscount = (itemPrice * appliedCoupon.discount_value) / 100;
-          itemPrice = itemPrice - itemDiscount;
-          discount += itemDiscount * item.quantity;
-        }
+      const isApplicable =
+        appliedCoupon && appliedCoupon.products.some((p) => p.id === item.id);
+
+      if (isApplicable && applicableSubtotal > 0) {
+        const itemSubtotal = itemPrice * item.quantity;
+        const itemCouponDiscount =
+          (itemSubtotal / applicableSubtotal) * couponDiscount;
+        itemDiscount = itemCouponDiscount / item.quantity;
+        itemPrice = Math.max(0, itemPrice - itemDiscount);
       }
 
-      subtotal += itemPrice * item.quantity;
+      rawSubtotal += (itemPrice + itemDiscount) * item.quantity;
       return { ...item, effectivePrice: itemPrice, itemDiscount };
     });
 
+    const subtotal = rawSubtotal - couponDiscount;
     const total = subtotal + deliveryFee;
-    return { subtotal, discount, total, updatedCart };
+    return { subtotal, discount: couponDiscount, total, updatedCart };
   };
 
   const { subtotal, discount, total, updatedCart } = calculateTotals();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   const toggleItemDetails = (productId: string) => {
@@ -238,7 +270,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
         originalPrice: item.discount_price ?? item.price,
         quantity: item.quantity,
         itemDiscount: item.itemDiscount,
-        orderItemId: orderItems[item.cartItemId], // Map to backend OrderItem ID
+        orderItemId: orderItems[item.cartItemId],
       });
 
       acc[productKey].totalQuantity += item.quantity;
@@ -252,16 +284,19 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
 
   const nextStep = () => {
     if (currentStep === 1) {
-      // Validate Purchase Information
-      if (
-        !formData.fullName ||
-        !formData.phoneNumber ||
-        !formData.deliveryArea ||
-        !formData.deliveryAddress
-      ) {
-        setError("Please fill in all required fields.");
+      const newErrors: Record<string, string | null> = {};
+      if (!formData.fullName.trim()) newErrors.fullName = "Full Name is required";
+      if (!formData.phoneNumber.trim()) newErrors.phoneNumber = "Phone Number is required";
+      if (!formData.deliveryAddress.trim()) newErrors.deliveryAddress = "Delivery Address is required";
+
+      setFormErrors(newErrors);
+
+      if (Object.values(newErrors).some((e) => e !== null)) {
         return;
       }
+
+      handleCreateCustomer();
+      return;
     }
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
@@ -279,11 +314,35 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
     { value: "Someone else", label: "Someone else" },
   ];
 
-  const handleCreateOrder = async () => {
-    setIsLoading(true);
+  const handleCreateCustomer = async () => {
+    setCustomerLoading(true);
     setError(null);
     try {
-      // Validate cart items
+      const customerData = {
+        name: formData.fullName,
+        phone: formData.phoneNumber,
+        email: formData.email || "",
+        address: formData.deliveryAddress,
+      };
+      const response = await cartApi.createCustomer(customerData);
+      setCustomerId(response.id);
+      setCurrentStep(2);
+    } catch (err: any) {
+      setError(err.message || "Failed to create customer");
+      console.error("Failed to create customer:", err);
+    } finally {
+      setCustomerLoading(false);
+    }
+  };
+
+  const handleCreateOrder = async () => {
+    if (!customerId) {
+      setError("Customer not created. Please go back and try again.");
+      return;
+    }
+    setOrderLoading(true);
+    setError(null);
+    try {
       const invalidItems = cart.filter(
         (item) =>
           item.id === undefined ||
@@ -295,22 +354,20 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
         setError(
           "Some cart items are missing required fields (id, price, or quantity)."
         );
-        setIsLoading(false);
+        setOrderLoading(false);
         return;
       }
 
       const orderData = {
-        customer_name: formData.fullName,
-        customer_phone: formData.phoneNumber,
-        customer_email: formData.email,
-        customer_address: formData.deliveryAddress,
-        delivery_area_id: parseInt(formData.deliveryArea),
+        customer_id: customerId,
+        delivery_area_id: formData.deliveryArea
+          ? parseInt(formData.deliveryArea)
+          : null,
         recipient_type:
           formData.recipient.toLowerCase() === "myself"
             ? "myself"
             : "someone_else",
         order_notes: formData.orderNotes,
-        coupon_code: appliedCoupon?.code || "",
         items: cart.map((item) => ({
           product_id: item.id,
           option: item.selectedOption,
@@ -324,9 +381,8 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
 
       console.log("Order data being sent:", JSON.stringify(orderData, null, 2));
 
-      const response = await apiClient.createOrder(orderData);
+      const response = await cartApi.createOrder(orderData);
       setOrderId(response.id);
-      // Map cartItemId to orderItemId from response
       const itemMapping: Record<string, number> = {};
       response.items.forEach((item: any) => {
         const cartItem = cart.find(
@@ -342,23 +398,24 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       setError(err.message || "Failed to create order");
       console.error("Failed to create order:", err);
     } finally {
-      setIsLoading(false);
+      setOrderLoading(false);
     }
   };
+
   const handleUpdateQuantity = async (
     cartItemId: string,
     newQuantity: number
   ) => {
     if (!orderId || !orderItems[cartItemId]) return;
 
-    setIsLoading(true);
+    setUpdatingItems((prev) => new Set([...prev, cartItemId]));
     setError(null);
     try {
       const orderItemId = orderItems[cartItemId];
       const cartItem = cart.find((item) => item.cartItemId === cartItemId);
       if (!cartItem) return;
 
-      await apiClient.updateOrderItem(orderId, orderItemId, {
+      await cartApi.updateOrderItem(orderId, orderItemId, {
         quantity: newQuantity,
         discount_price:
           cartItem.effectivePrice ?? cartItem.discount_price ?? null,
@@ -368,7 +425,11 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       setError(err.message || "Failed to update item quantity");
       console.error("Failed to update item quantity:", err);
     } finally {
-      setIsLoading(false);
+      setUpdatingItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(cartItemId);
+        return newSet;
+      });
     }
   };
 
@@ -378,11 +439,11 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       return;
     }
 
-    setIsLoading(true);
+    setUpdatingItems((prev) => new Set([...prev, cartItemId]));
     setError(null);
     try {
       const orderItemId = orderItems[cartItemId];
-      await apiClient.updateOrderItem(orderId, orderItemId, { quantity: 0 });
+      await cartApi.updateOrderItem(orderId, orderItemId, { quantity: 0 });
       removeFromCart(cartItemId);
       setOrderItems((prev) => {
         const newItems = { ...prev };
@@ -393,25 +454,29 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       setError(err.message || "Failed to remove item");
       console.error("Failed to remove item:", err);
     } finally {
-      setIsLoading(false);
+      setUpdatingItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(cartItemId);
+        return newSet;
+      });
     }
   };
 
   const handleCompleteOrder = async () => {
     if (!orderId) return;
 
-    setIsLoading(true);
+    setConfirmLoading(true);
     setError(null);
     try {
-      await apiClient.updateOrderStatus(orderId, "confirmed"); // Changed to "confirmed" for clarity
-      alert("Order confirmed successfully!");
+      await cartApi.updateOrderStatus(orderId, "abandoned");
+      alert("Order placed successfully!");
       clearCart();
       onClose();
     } catch (err: any) {
       setError(err.message || "Failed to confirm order");
       console.error("Failed to confirm order:", err);
     } finally {
-      setIsLoading(false);
+      setConfirmLoading(false);
     }
   };
 
@@ -419,18 +484,18 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
     <>
       <div className="flex-shrink-0 p-6 pb-0">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
             Your Cart
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-[var(--color-border)] border border-[var(--color-border)] transition"
+            className="p-1 rounded-full hover:bg-[var(--color-border-strong)] border border-[var(--color-border-default)] transition"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--color-text-secondary)]">
           {Object.keys(groupedCart).length}{" "}
           {Object.keys(groupedCart).length === 1 ? "Product" : "Products"} •{" "}
           {cart.length} {cart.length === 1 ? "Item" : "Items"}
@@ -438,7 +503,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-[var(--color-brand-primary)] mb-4">
           Review your items and proceed to checkout when you're ready
         </p>
 
@@ -452,10 +517,10 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
             />
             <button
               onClick={handleApplyCoupon}
-              className="py-2 px-4 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition disabled:opacity-50"
-              disabled={isLoading}
+              className="py-2 px-4 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-lg text-sm font-semibold hover:bg-[var(--color-brand-hover)] transition disabled:opacity-50"
+              disabled={couponLoading}
             >
-              {isLoading ? "Applying..." : "Apply"}
+              {couponLoading ? "Applying..." : "Apply"}
             </button>
           </div>
           {couponError && (
@@ -475,7 +540,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
         </div>
 
         {cart.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-8">
+          <p className="text-sm text-[var(--color-text-secondary)] text-center py-8">
             Your cart is empty.
           </p>
         ) : (
@@ -489,7 +554,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
               return (
                 <div
                   key={productId}
-                  className="border border-[var(--color-border-secondary)] rounded-2xl overflow-hidden"
+                  className="border border-[var(--color-border-default)] rounded-2xl overflow-hidden"
                 >
                   <div className="flex items-start justify-between p-4">
                     <div className="flex items-start space-x-4">
@@ -499,7 +564,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                         className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                       />
                       <div className="flex flex-col">
-                        <h3 className="text-sm font-medium text-[var(--color-text)] leading-tight">
+                        <h3 className="text-sm font-medium text-[var(--color-text-primary)] leading-tight">
                           {productData.productInfo.name}
                           {hasCoupon && (
                             <span className="ml-2 text-xs text-green-500">
@@ -507,8 +572,8 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                             </span>
                           )}
                         </h3>
-                        <div className="flex items-center text-xs text-gray-500 mt-1">
-                          <span className="w-2 h-2 bg-[var(--color-primary)] rounded-full mr-1"></span>
+                        <div className="flex items-center text-xs text-[var(--color-text-secondary)] mt-1">
+                          <span className="w-2 h-2 bg-[var(--color-brand-primary)] rounded-full mr-1"></span>
                           {productData.totalQuantity}{" "}
                           {productData.totalQuantity === 1 ? "item" : "items"} •
                           NGN {productData.totalPrice.toLocaleString()}
@@ -518,7 +583,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
 
                     <button
                       onClick={() => toggleItemDetails(productId)}
-                      className="text-gray-500 hover:text-[var(--color-primary)] transition"
+                      className="text-[var(--color-text-secondary)] hover:text-[var(--color-brand-primary)] transition"
                       aria-label={isExpanded ? "Hide options" : "Show options"}
                     >
                       {isExpanded ? (
@@ -530,85 +595,91 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                   </div>
 
                   {isExpanded && (
-                    <div className="border-t border-[var(--color-border-secondary)]">
-                      {productData.options.map((option, optionIndex) => (
-                        <div
-                          key={`${option.cartItemId}-${optionIndex}`}
-                          className="flex items-center justify-between p-4 border-b border-[var(--color-border-secondary)] last:border-b-0"
-                        >
-                          <div className="flex flex-col gap-y-4">
-                            <span className="text-sm text-[var(--color-text)] font-medium">
-                              Option: {option.name}
-                            </span>
-                            <div className="text-sm text-[var(--color-text)] font-medium">
-                              {option.itemDiscount > 0 ? (
-                                <>
-                                  <span className="line-through text-gray-500 mr-2">
-                                    NGN{" "}
-                                    {(
-                                      option.originalPrice * option.quantity
-                                    ).toLocaleString()}
-                                  </span>
-                                  <span className="text-green-500">
+                    <div className="border-t border-[var(--color-border-default)]">
+                      {productData.options.map((option, optionIndex) => {
+                        const isUpdating = updatingItems.has(option.cartItemId);
+                        return (
+                          <div
+                            key={`${option.cartItemId}-${optionIndex}`}
+                            className="flex items-center justify-between p-4 border-b border-[var(--color-border-default)] last:border-b-0"
+                          >
+                            <div className="flex flex-col gap-y-4">
+                              <span className="text-sm text-[var(--color-text-primary)] font-medium">
+                                Option: {option.name}
+                              </span>
+                              <div className="text-sm text-[var(--color-text-primary)] font-medium">
+                                {option.itemDiscount > 0 ? (
+                                  <>
+                                    <span className="line-through text-[var(--color-text-secondary)] mr-2">
+                                      NGN{" "}
+                                      {(
+                                        option.originalPrice * option.quantity
+                                      ).toLocaleString()}
+                                    </span>
+                                    <span className="text-green-500">
+                                      NGN{" "}
+                                      {(
+                                        option.price * option.quantity
+                                      ).toLocaleString()}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span>
                                     NGN{" "}
                                     {(
                                       option.price * option.quantity
                                     ).toLocaleString()}
                                   </span>
-                                </>
-                              ) : (
-                                <span>
-                                  NGN{" "}
-                                  {(
-                                    option.price * option.quantity
-                                  ).toLocaleString()}
-                                </span>
-                              )}
+                                )}
+                              </div>
                             </div>
-                          </div>
 
-                          <div className="flex flex-col items-end space-y-4">
-                            <button
-                              onClick={() =>
-                                handleRemoveFromCart(option.cartItemId)
-                              }
-                              className="text-red-500 hover:text-red-700 transition p-1"
-                              aria-label="Remove option"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                            <div className="flex items-center border border-[var(--color-primary)] rounded-full">
+                            <div className="flex flex-col items-end space-y-4">
                               <button
                                 onClick={() =>
-                                  handleUpdateQuantity(
-                                    option.cartItemId,
-                                    Math.max(0, option.quantity - 1)
-                                  )
+                                  handleRemoveFromCart(option.cartItemId)
                                 }
-                                className="w-8 h-6 flex items-center justify-center text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-l-full transition"
-                                aria-label="Decrease quantity"
+                                className="text-red-500 hover:text-red-700 transition p-1 disabled:opacity-50"
+                                aria-label="Remove option"
+                                disabled={isUpdating}
                               >
-                                -
+                                <Trash2 className="w-4 h-4" />
                               </button>
-                              <span className="px-3 py- text-sm text-[var(--color-primary)] min-w-[2rem] text-center">
-                                {option.quantity}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleUpdateQuantity(
-                                    option.cartItemId,
-                                    option.quantity + 1
-                                  )
-                                }
-                                className="w-8 h-6 flex items-center justify-center text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-r-full transition"
-                                aria-label="Increase quantity"
-                              >
-                                +
-                              </button>
+                              <div className="flex items-center border border-[var(--color-border-strong)] rounded-full">
+                                <button
+                                  onClick={() =>
+                                    handleUpdateQuantity(
+                                      option.cartItemId,
+                                      Math.max(0, option.quantity - 1)
+                                    )
+                                  }
+                                  className="w-8 h-6 flex items-center justify-center text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-l-full transition disabled:opacity-50"
+                                  aria-label="Decrease quantity"
+                                  disabled={isUpdating}
+                                >
+                                  -
+                                </button>
+                                <span className="px-3 py-2 text-sm text-[var(--color-brand-primary)] min-w-[2rem] text-center">
+                                  {option.quantity}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    handleUpdateQuantity(
+                                      option.cartItemId,
+                                      option.quantity + 1
+                                    )
+                                  }
+                                  className="w-8 h-6 flex items-center justify-center text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-r-full transition disabled:opacity-50"
+                                  aria-label="Increase quantity"
+                                  disabled={isUpdating}
+                                >
+                                  +
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -621,53 +692,53 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       <div className="flex-shrink-0 p-6 pt-0">
         {cart.length > 0 && (
           <>
-            <div className="border-t border-[var(--color-border)] my-4"></div>
+            <div className="border-t border-[var(--color-border-strong)] my-4"></div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <p className="text-base font-semibold text-[var(--color-text)]">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                   Subtotal
                 </p>
-                <p className="text-base font-semibold text-[var(--color-text)]">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                   NGN {subtotal.toLocaleString()}
                 </p>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between items-center">
-                  <p className="text-base font-semibold text-green-500">
+                  <p className="text-sm font-semibold text-green-500">
                     Coupon Discount
                   </p>
-                  <p className="text-base font-semibold text-green-500">
+                  <p className="text-sm font-semibold text-green-500">
                     - NGN {discount.toLocaleString()}
                   </p>
                 </div>
               )}
               <div className="flex justify-between items-center">
-                <p className="text-base font-semibold text-[var(--color-text)]">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                   Delivery Fee
                 </p>
-                <p className="text-base font-semibold text-[var(--color-text)]">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                   NGN {deliveryFee.toLocaleString()}
                 </p>
               </div>
-              <div className="flex justify-between items-center pt-2 border-t border-[var(--color-border)]">
-                <p className="text-base font-semibold text-[var(--color-text)]">
+              <div className="flex justify-between items-center pt-2 border-t border-[var(--color-border-strong)]">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                   Total
                 </p>
-                <p className="text-base font-semibold text-[var(--color-text)]">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                   NGN {total.toLocaleString()}
                 </p>
               </div>
             </div>
             <div className="flex space-x-3 mt-4">
               <button
-                onClick={() => {}} // Placeholder for enquiry action
-                className="flex-1 py-3 text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg text-sm font-semibold hover:bg-[var(--color-border)] transition"
+                onClick={() => {}}
+                className="flex-1 py-3 text-sm font-semibold  transition bg-[var(--color-bg-secondary)]  hover:bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]  rounded-xl"
               >
                 Make an Enquiry
               </button>
               <button
                 onClick={nextStep}
-                className="flex-1 py-3 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition"
+                className="flex-1 py-3 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-xl text-sm font-semibold hover:bg-[var(--color-brand-hover)] transition"
               >
                 Proceed
               </button>
@@ -682,40 +753,42 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
     <>
       <div className="flex-shrink-0 p-6 pb-0">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
             Purchase Information
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-[var(--color-border)] border border-[var(--color-border)] transition"
+            className="p-1 rounded-full hover:bg-[var(--color-border-strong)] border border-[var(--color-border-default)] transition"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
-        <div className="w-full bg-[var(--color-border)] h-1 rounded-full mb-4">
+        <div className="w-full bg-[var(--color-border-strong)] h-1 rounded-full mb-4">
           <div
-            className="bg-[var(--color-primary)] h-1 rounded-full"
+            className="bg-[var(--color-brand-primary)] h-1 rounded-full"
             style={{ width: "33%" }}
           ></div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        {isLoading ? (
-          <p className="text-sm text-gray-500">Loading delivery areas...</p>
+        {deliveryLoading ? (
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Loading delivery areas...
+          </p>
         ) : error ? (
           <p className="text-sm text-red-500">{error}</p>
         ) : (
           <>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-[var(--color-brand-primary)] mb-6">
               You're almost there! Kindly fill in the following information
               before proceeding to checkout
             </p>
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm text-gray-500 mb-2">
+                <label className="block text-sm text-[var(--color-text-primary)] mb-2">
                   Who will receive this item?
                 </label>
                 <FloatingLabelSelect
@@ -730,7 +803,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
               </div>
 
               <div>
-                <h3 className="font-medium text-[var(--color-text)] mb-4">
+                <h3 className="font-xs font-semibold text-[var(--color-text-primary)] mb-4">
                   Your Details
                 </h3>
                 <div className="space-y-4">
@@ -742,23 +815,20 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                     }
                     placeholder="Full Name"
                     required
+                    error={formErrors.fullName}
                   />
-                  <div className="flex">
-                    <div className="flex items-center px-3 bg-[var(--color-bg)] border border-r-0 border-[var(--color-border)] rounded-l-2xl h-[3rem]">
-                      <span className="text-sm text-gray-500">🇳🇬 +234</span>
-                    </div>
-                    <FloatingLabelInput
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={(e) =>
-                        handleInputChange("phoneNumber", e.target.value)
-                      }
-                      placeholder="Your Whatsapp Number"
-                      type="tel"
-                      className="rounded-l-none"
-                      required
-                    />
-                  </div>
+                  <FloatingLabelInput
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={(e) =>
+                      handleInputChange("phoneNumber", e.target.value)
+                    }
+                    placeholder="Your Phone Number (Preferably Whatsapp)"
+                    type="text"
+                    required
+                    error={formErrors.phoneNumber}
+                  />
+
                   <FloatingLabelInput
                     name="email"
                     value={formData.email}
@@ -770,21 +840,22 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
               </div>
 
               <div>
-                <h3 className="font-medium text-[var(--color-text)] mb-4">
+                <h3 className="font-xs font-semibold text-[var(--color-text-primary)] mb-4">
                   Delivery Details
                 </h3>
                 <div className="space-y-4">
-                  <FloatingLabelSelect
-                    id="deliveryArea"
-                    name="deliveryArea"
-                    value={formData.deliveryArea}
-                    onChange={(value) =>
-                      handleInputChange("deliveryArea", value as string)
-                    }
-                    placeholder="Select Delivery Area"
-                    options={deliveryAreaOptions}
-                    required
-                  />
+                  {deliveryAreaOptions.length > 1 && (
+                    <FloatingLabelSelect
+                      id="deliveryArea"
+                      name="deliveryArea"
+                      value={formData.deliveryArea}
+                      onChange={(value) =>
+                        handleInputChange("deliveryArea", value as string)
+                      }
+                      placeholder="Select Delivery Area"
+                      options={deliveryAreaOptions}
+                    />
+                  )}
                   <FloatingLabelTextarea
                     name="deliveryAddress"
                     value={formData.deliveryAddress}
@@ -794,6 +865,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                     placeholder="Delivery Address"
                     rows={4}
                     required
+                    error={formErrors.deliveryAddress}
                   />
                 </div>
               </div>
@@ -807,16 +879,16 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
         <div className="flex space-x-3">
           <button
             onClick={prevStep}
-            className="flex-1 py-3 text-[var(--color-text)] border border-[var(--color-border)] rounded-lg text-sm font-semibold hover:bg-[var(--color-border)] transition"
+            className="flex-1 py-3 text-sm font-semibold  bg-[var(--color-bg-secondary)]  hover:bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]  rounded-xl transition"
           >
             Go Back
           </button>
           <button
             onClick={nextStep}
-            className="flex-1 py-3 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition"
-            disabled={isLoading}
+            className="flex-1 py-3 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-lg text-sm font-semibold hover:bg-[var(--color-brand-hover)] transition disabled:opacity-50"
+            disabled={customerLoading}
           >
-            Continue
+            {customerLoading ? "Creating..." : "Continue"}
           </button>
         </div>
       </div>
@@ -827,20 +899,20 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
     <>
       <div className="flex-shrink-0 p-6 pb-0">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-[var(--color-text)]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             Extra Information
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-[var(--color-border)] border border-[var(--color-border)] transition"
+            className="p-1 rounded-full hover:bg-[var(--color-border-strong)] border border-[var(--color-border-default)] transition"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
-        <div className="w-full bg-[var(--color-border)] h-1 rounded-full mb-4">
+        <div className="w-full bg-[var(--color-border-strong)] h-1 rounded-full mb-4">
           <div
-            className="bg-[var(--color-primary)] h-1 rounded-full"
+            className="bg-[var(--color-brand-primary)] h-1 rounded-full"
             style={{ width: "66%" }}
           ></div>
         </div>
@@ -849,10 +921,10 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
       <div className="flex-1 overflow-y-auto px-6 py-4">
         <div className="space-y-6">
           <div>
-            <label className="block text-sm text-[var(--color-text)] mb-2 font-medium">
+            <label className="block text-sm text-[var(--color-brand-primary)] mb-6 font-medium">
               Do you have any notes or special instructions?
             </label>
-            <label className="block text-xs text-gray-500 mb-2">
+            <label className="block text-sm text-[var(--color-text-primary)] mb-2">
               Order Notes
             </label>
             <FloatingLabelTextarea
@@ -871,16 +943,16 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
         <div className="flex space-x-3">
           <button
             onClick={prevStep}
-            className="flex-1 py-3 text-[var(--color-text)] border border-[var(--color-border)] rounded-lg text-sm font-semibold hover:bg-[var(--color-border)] transition"
+            className="flex-1 py-3 text-sm font-semibold  bg-[var(--color-bg-secondary)]  hover:bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]  rounded-xl transition"
           >
             Go Back
           </button>
           <button
             onClick={handleCreateOrder}
-            className="flex-1 py-3 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition"
-            disabled={isLoading}
+            className="flex-1 py-3 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-lg text-sm font-semibold hover:bg-[var(--color-brand-hover)] transition disabled:opacity-50"
+            disabled={orderLoading}
           >
-            {isLoading ? "Creating..." : "Continue"}
+            {orderLoading ? "Creating..." : "Continue"}
           </button>
         </div>
       </div>
@@ -891,27 +963,27 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
     <>
       <div className="flex-shrink-0 p-6 pb-0">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
             Order Summary
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-[var(--color-border)] border border-[var(--color-border)] transition"
+            className="p-1 rounded-full hover:bg-[var(--color-border-strong)] border border-[var(--color-border-default)] transition"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
-        <div className="w-full bg-[var(--color-border)] h-1 rounded-full mb-4">
+        <div className="w-full bg-[var(--color-border-strong)] h-1 rounded-full mb-4">
           <div
-            className="bg-[var(--color-primary)] h-1 rounded-full"
+            className="bg-[var(--color-brand-primary)] h-1 rounded-full"
             style={{ width: "100%" }}
           ></div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-[var(--color-brand-primary)] mb-6">
           You're almost there! Kindly review the following information before
           proceeding to checkout
         </p>
@@ -924,30 +996,25 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
               className="w-16 h-16 object-cover rounded-lg"
             />
             <div>
-              <p className="font-medium text-[var(--color-text)]">
+              <p className="font-medium text-[var(--color-text-primary)]">
                 {cart[0]?.name.split(" (")[0] || "Asymmetric Swan Dress"} and{" "}
                 {Object.keys(groupedCart).length - 1} other{" "}
                 {Object.keys(groupedCart).length - 1 === 1 ? "Item" : "Items"}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[var(--color-text-secondary)]">
                 NGN {subtotal.toLocaleString()}
               </p>
             </div>
           </div>
 
           <button
-            onClick={() =>
-              setShowItemDetails((prev) => ({
-                ...prev,
-                summary: !prev.summary,
-              }))
-            }
-            className="text-sm text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] underline"
+            onClick={() => setShowSummaryDetails((prev) => !prev)}
+            className="text-sm text-[var(--color-brand-primary)] hover:text-[var(--color-primary-hover)] underline"
           >
-            View All Items
+            {showSummaryDetails ? "Hide" : "View"} All Items
           </button>
 
-          {showItemDetails.summary && (
+          {showSummaryDetails && (
             <div className="space-y-4">
               {Object.entries(groupedCart).map(([productId, productData]) => {
                 const hasCoupon = appliedCoupon?.products.some(
@@ -956,7 +1023,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                 return (
                   <div
                     key={productId}
-                    className="border border-[var(--color-border-secondary)] rounded-2xl p-4"
+                    className="border border-[var(--color-border-default)] rounded-2xl p-4"
                   >
                     <div className="flex items-start space-x-4 mb-2">
                       <img
@@ -965,7 +1032,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                         className="w-12 h-12 object-cover rounded-lg"
                       />
                       <div>
-                        <p className="font-medium text-[var(--color-text)] text-sm">
+                        <p className="font-medium text-[var(--color-text-primary)] text-sm">
                           {productData.productInfo.name}
                           {hasCoupon && (
                             <span className="ml-2 text-xs text-green-500">
@@ -973,7 +1040,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                             </span>
                           )}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-[var(--color-text-secondary)]">
                           {productData.totalQuantity}{" "}
                           {productData.totalQuantity === 1 ? "item" : "items"} •
                           NGN {productData.totalPrice.toLocaleString()}
@@ -984,13 +1051,13 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                       {productData.options.map((option, optionIndex) => (
                         <div
                           key={`${option.cartItemId}-${optionIndex}`}
-                          className="flex justify-between text-xs text-gray-500"
+                          className="flex justify-between text-xs text-[var(--color-text-secondary)]"
                         >
                           <span>Option: {option.name}</span>
                           <div>
                             {option.itemDiscount > 0 ? (
                               <>
-                                <span className="line-through text-gray-500 mr-2">
+                                <span className="line-through text-[var(--color-text-secondary)] mr-2">
                                   {option.quantity} x NGN{" "}
                                   {option.originalPrice.toLocaleString()}
                                 </span>
@@ -1022,64 +1089,69 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
           )}
 
           <div className="space-y-4 text-sm">
-            <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-secondary)]">
+            <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-default)]">
               <div className="flex items-center space-x-2">
-                <span className="text-gray-500">👤</span>
-                <span className="font-medium text-[var(--color-text)]">
+                <span className="text-[var(--color-text-secondary)]">👤</span>
+                <span className="font-medium text-[var(--color-text-primary)]">
                   Purchase Information
                 </span>
               </div>
-              <span className="text-gray-500">›</span>
             </div>
-            <div className="ml-6 text-xs text-gray-500">
-              <p>{formData.fullName || "Adedayo Ojo"}</p>
-              <p>{formData.phoneNumber || "+234814562772"}</p>
+            <div className="ml-6 text-xs text-[var(--color-text-secondary)]">
+              <p>
+                <strong>Name:</strong> {formData.fullName}
+              </p>
+              <p>
+                <strong>Phone Number:</strong> {formData.phoneNumber}
+              </p>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-secondary)]">
+            <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-default)]">
               <div className="flex items-center space-x-2">
-                <span className="text-gray-500">📍</span>
-                <span className="font-medium text-[var(--color-text)]">
+                <span className="text-[var(--color-text-secondary)]">📍</span>
+                <span className="font-medium text-[var(--color-text-primary)]">
                   Delivery Location
                 </span>
               </div>
-              <span className="text-gray-500">›</span>
             </div>
-            <div className="ml-6 text-xs text-gray-500">
-              <p>{formData.deliveryAddress || "Abuja"}</p>
+            <div className="ml-6 text-xs text-[var(--color-text-secondary)]">
+              <p>{formData.deliveryAddress}</p>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-secondary)]">
+            <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-default)]">
               <div className="flex items-center space-x-2">
-                <span className="text-gray-500">🚚</span>
-                <span className="font-medium text-[var(--color-text)]">
+                <span className="text-[var(--color-text-secondary)]">🚚</span>
+                <span className="font-medium text-[var(--color-text-primary)]">
                   Delivery Area
                 </span>
               </div>
-              <span className="text-gray-500">›</span>
             </div>
-            <div className="ml-6 text-xs text-gray-500">
+            <div className="ml-6 text-xs text-[var(--color-text-secondary)]">
               <p>
+                <strong>Delivery Area: </strong>
                 {deliveryAreaOptions
                   .find((opt) => opt.value === formData.deliveryArea)
-                  ?.label.replace(/ \(₦.*\)/, "") ||
-                  formData.deliveryArea ||
-                  "Festac Town"}
+                  ?.label.replace(/ \(₦.*\)/, "") || "Not selected"}
               </p>
-              <p>NGN {deliveryFee.toLocaleString()}</p>
+              <p>
+                <strong>Delivery cost: </strong> NGN{" "}
+                {deliveryFee.toLocaleString()}
+              </p>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-secondary)]">
+            <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-default)]">
               <div className="flex items-center space-x-2">
-                <span className="text-gray-500">📝</span>
-                <span className="font-medium text-[var(--color-text)]">
+                <span className="text-[var(--color-text-secondary)]">📝</span>
+                <span className="font-medium text-[var(--color-text-primary)]">
                   Extra Information
                 </span>
               </div>
-              <span className="text-gray-500">›</span>
             </div>
-            <div className="ml-6 text-xs text-gray-500">
-              <p>{formData.orderNotes || "No notes provided"}</p>
+            <div className="ml-6 text-xs text-[var(--color-text-secondary)]">
+              <p>
+                <strong>Note: </strong>
+                {formData.orderNotes || "No notes provided"}
+              </p>
             </div>
           </div>
 
@@ -1093,10 +1165,10 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
               />
               <button
                 onClick={handleApplyCoupon}
-                className="py-2 px-4 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition disabled:opacity-50"
-                disabled={isLoading}
+                className="py-2 px-4 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-lg text-sm font-semibold hover:bg-[var(--color-brand-hover)] transition disabled:opacity-50"
+                disabled={couponLoading}
               >
-                {isLoading ? "Applying..." : "Apply"}
+                {couponLoading ? "Applying..." : "Apply"}
               </button>
             </div>
             {couponError && (
@@ -1115,8 +1187,8 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
             )}
           </div>
 
-          <div className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl p-4">
-            <h3 className="font-medium text-[var(--color-text)] mb-3">
+          <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border-default)] rounded-2xl p-4">
+            <h3 className="font-medium text-[var(--color-text-primary)] mb-3">
               SUMMARY
             </h3>
             <div className="space-y-2 text-sm">
@@ -1134,7 +1206,7 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
                 <span>Delivery Fee</span>
                 <span>NGN {deliveryFee.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between font-medium text-base pt-2 border-t border-[var(--color-border)]">
+              <div className="flex justify-between font-medium text-sm pt-2 border-t border-[var(--color-border-strong)]">
                 <span>Total</span>
                 <span>NGN {total.toLocaleString()}</span>
               </div>
@@ -1148,16 +1220,16 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
         <div className="flex space-x-3">
           <button
             onClick={prevStep}
-            className="flex-1 py-3 text-[var(--color-text)] border border-[var(--color-border)] rounded-lg text-sm font-semibold hover:bg-[var(--color-border)] transition"
+            className="flex-1 py-3 text-sm font-semibold  bg-[var(--color-bg-secondary)]  hover:bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]  rounded-xl transition"
           >
             Go Back
           </button>
           <button
             onClick={handleCompleteOrder}
-            className="flex-1 py-3 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition"
-            disabled={isLoading || !orderId || cart.length === 0}
+            className="flex-1 py-3 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-lg text-sm font-semibold hover:bg-[var(--color-brand-hover)] transition disabled:opacity-50"
+            disabled={confirmLoading || !orderId || cart.length === 0}
           >
-            {isLoading ? "Confirming..." : "Confirm Order"}
+            {confirmLoading ? "Confirming..." : "Confirm Order"}
           </button>
         </div>
       </div>
@@ -1171,9 +1243,12 @@ const CartModal = ({ isOpen = true, onClose = () => {} }: CartModalProps) => {
     renderOrderSummaryStep,
   ];
 
+  // Early return AFTER all hooks have been called
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-[var(--color-bg)] rounded-2xl w-full max-w-lg mx-auto shadow-xl max-h-[80vh] flex flex-col animate-in fade-in-0 zoom-in-95">
+      <div className="bg-[var(--color-bg-surface)] rounded-3xl w-full max-w-lg mx-auto shadow-xl max-h-[80vh] flex flex-col animate-in fade-in-0 zoom-in-95">
         {steps[currentStep]()}
       </div>
     </div>

@@ -84,7 +84,7 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
           htmlFor={name}
           className={`absolute left-4 transition-all duration-200 pointer-events-none ${
             isFocused || selected
-              ? "text-xs top-2 text-[var(--color-primary)]"
+              ? "text-xs top-1 text-[var(--color-brand-primary)]"
               : "text-sm top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
           }`}
         >
@@ -102,7 +102,7 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
 
         {/* Dropdown menu */}
         {open && (
-          <ul className="absolute z-20 mt-1 w-full bg-white dark:bg-[var(--color-bg)] border border-[var(--color-border-strong)] rounded-xl shadow-lg max-h-48 overflow-y-auto">
+          <ul className="absolute z-20 mt-1 w-full bg-[var(--color-bg-primary)] border border-[var(--color-border-default)] rounded-xl shadow-lg max-h-48 overflow-y-auto">
             {options.map((opt) => (
               <li key={opt.value}>
                 <button
@@ -112,9 +112,9 @@ const FloatingLabelSelect: React.FC<FloatingLabelSelectProps> = ({
                     onChange(opt.value);
                     setOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-border-secondary)] ${
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-bg-secondary)] ${
                     value === opt.value
-                      ? "bg-[var(--color-brand-primary)] text-white"
+                      ? "bg-[var(--color-bg-surface)]"
                       : ""
                   } ${opt.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                 >

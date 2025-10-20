@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    checkAuthStatus();
+    checkAuthStatus(); 
   }, [router, logout]);
 
   return <>{children}</>;

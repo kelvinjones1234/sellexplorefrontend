@@ -22,19 +22,19 @@ export default function Categories({ categories }: { categories: Category[] }) {
   return (
     <section className="my-[1rem]">
       <div className="flex items-center justify-between mb-6 max-w-[1200px] px-2 mx-auto">
-        <h2 className="text-sm md:text-lg font-semibold text-[var(--color-primary)]">
+        <h2 className="text-sm md:text-lg font-semibold text-[var(--color-brand-primary)]">
           Categories
         </h2>
         <div className="flex gap-2">
           <button
             onClick={() => scroll("left")}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--color-border-secondary)] hover:bg-[var(--color-primary)] transition"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--color-border-secondary)] hover:bg-[var(--color-brand-primary)] transition"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => scroll("right")}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--color-border-secondary)] hover:bg-[var(--color-primary)] transition"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--color-border-secondary)] hover:bg-[var(--color-brand-primary)] transition"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

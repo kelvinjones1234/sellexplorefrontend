@@ -670,4 +670,4 @@ class APIClient {
 }
 
 // Export singleton instance
-export const apiClient = APIClient.getInstance();
+export const apiClient = APIClient.getInstance(); 

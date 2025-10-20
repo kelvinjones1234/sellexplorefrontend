@@ -109,7 +109,7 @@ const ProductCard = memo(
     }, [product, onHandleCartClick]);
 
     return (
-      <div className="bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border-secondary)] overflow-hidden group relative hover:shadow-sm transition">
+      <div className="rounded-2xl border border-[var(--color-border-default)] overflow-hidden group relative hover:shadow-sm transition">
         <div className="relative">
           {calculations.discountPercent !== null && (
             <span className="absolute top-2 left-2 bg-pink-500 text-white text-xs font-semibold px-2 py-1 rounded z-10">
@@ -134,7 +134,7 @@ const ProductCard = memo(
             {product.name}
           </h3>
           <div className="flex flex-col mt-2">
-            <span className="text-[var(--color-primary)] font-semibold text-sm">
+            <span className="text-[var(--color-brand-primary)] font-semibold text-sm">
               NGN {calculations.finalPrice.toLocaleString()}
             </span>
             {calculations.discountPrice !== null && (
@@ -149,20 +149,20 @@ const ProductCard = memo(
             </div>
 
             {totalQuantity > 0 ? (
-              <div className="flex items-center border border-[var(--color-primary)] rounded-full">
+              <div className="flex items-center border border-[var(--color-border-strong)] rounded-full">
                 <button
                   onClick={handleDecrease}
-                  className="p-1 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-l-full transition"
+                  className="p-1 text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-l-full transition"
                   aria-label={`Decrease quantity for ${product.name}`}
                 >
-                  <Minus size={14} />
+                  <Minus size={14}/>
                 </button>
-                <span className="px-2 text-sm text-[var(--color-primary)] min-w-[2rem] text-center">
+                <span className="px-2 text-sm text-[var(--color-brand-primary)] min-w-[2rem] text-center">
                   {totalQuantity}
                 </span>
                 <button
                   onClick={handleIncrease}
-                  className="p-1 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-r-full transition"
+                  className="p-1 text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-r-full transition"
                   aria-label={`Increase quantity for ${product.name}`}
                 >
                   <Plus size={14} />
@@ -171,7 +171,7 @@ const ProductCard = memo(
             ) : (
               <button
                 onClick={handleCartButtonClick}
-                className="border border-[var(--color-primary)] text-[var(--color-primary)] rounded-full h-8 w-8 flex items-center justify-center hover:bg-[var(--color-primary)] hover:text-white transition"
+                className="border border-[var(--color-brand-primary)] text-[var(--color-brand-primary)] rounded-full h-8 w-8 flex items-center justify-center hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)]"
                 aria-label={`Add ${product.name} to cart`}
               >
                 <ShoppingCart size={18} />
@@ -185,7 +185,6 @@ const ProductCard = memo(
 );
 
 ProductCard.displayName = "ProductCard";
-
 
 interface ProductsProps {
   categories: Category[];
@@ -375,7 +374,7 @@ const Products: React.FC<ProductsProps> = ({
     <div className="max-w-[1200px] px-4 mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center my-4">
-        <h2 className="text-[var(--color-primary)] text-sm md:text-lg font-semibold">
+        <h2 className="text-[var(--color-brand-primary)] text-sm md:text-lg font-semibold">
           {categoryLabel}
         </h2>
         <div className="w-[12rem] md:w-[20rem] my-[1rem]">
@@ -395,19 +394,19 @@ const Products: React.FC<ProductsProps> = ({
           {Array.from({ length: 8 }).map((_, idx) => (
             <div
               key={idx}
-              className="bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border-secondary)] overflow-hidden animate-pulse"
+              className="bg-[var(--color-bg-primary)] rounded-2xl border border-[var(--color-border-secondary)] overflow-hidden animate-pulse"
             >
               {/* Image skeleton */}
-              <div className="w-full h-[12rem] sm:h-[15rem] bg-[var(--color-border)]" />
+              <div className="w-full h-[12rem] sm:h-[15rem] bg-[var(--color-border-default)]" />
 
               <div className="py-4 px-2 space-y-3">
                 {/* Title skeleton */}
-                <div className="h-4 bg-[var(--color-border)] rounded w-3/4" />
+                <div className="h-4 bg-[var(--color-border-default)] rounded w-3/4" />
                 {/* Price skeleton */}
-                <div className="h-4 bg-[var(--color-border)] rounded w-1/2" />
+                <div className="h-4 bg-[var(--color-border-default)] rounded w-1/2" />
                 {/* Cart button skeleton */}
                 <div className="flex justify-end mt-3">
-                  <div className="h-8 w-8 rounded-full bg-[var(--color-border)]" />
+                  <div className="h-8 w-8 rounded-full bg-[var(--color-border-default)]" />
                 </div>
               </div>
             </div>
@@ -430,10 +429,10 @@ const Products: React.FC<ProductsProps> = ({
         </div>
       ) : (
         <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
+          <div className="text-[var(--color-text-secondary)] mb-4">
             <ShoppingCart size={48} className="mx-auto opacity-50" />
           </div>
-          <p className="text-[var(--color-text-muted)] text-lg">
+          <p className="text-[var(--color-text-secondary)] text-lg">
             No products available at the moment.
           </p>
         </div>

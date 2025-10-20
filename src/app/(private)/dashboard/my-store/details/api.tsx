@@ -69,7 +69,7 @@ class APIClient {
         console.error("Error in token change listener:", err);
       }
     });
-  }
+  } 
 
   clearTokens(): void {
     this.setAccessToken(null);

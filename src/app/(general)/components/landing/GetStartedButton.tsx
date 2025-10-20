@@ -29,7 +29,9 @@ const GetStartedButton = ({
   };
 
   return (
-    <div className={`flex flex-col font-bold xs:flex-row items-center gap-y-4 gap-x-4`}>
+    <div
+      className={`flex flex-col font-bold xs:flex-row items-center gap-y-4 gap-x-4`}
+    >
       <style jsx>{`
         .no-color-transition {
           transition: none !important;
@@ -41,18 +43,27 @@ const GetStartedButton = ({
       `}</style>
       <button
         onClick={handleScrollToPricing}
-        className={`bg-[var(--color-primary)] my-3 hover:bg-[var(--color-primary-hover)] gap-3 px-6 py-4 inline-flex rounded-full text-sm md:text-lg sm:text-base text-white transition-all duration-300 shadow-md hover:shadow-lg items-center justify-center group no-color-transition`}
+        className={`my-3 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 
+             text-sm sm:text-base md:text-lg font-medium 
+             bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] 
+             shadow-md hover:bg-[var(--color-brand-hover)] hover:shadow-lg 
+             transition-all duration-300 group`}
       >
         {children || (
           <>
             Get started for free
-            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+            <ArrowRight className="w-5 h-5 ml-1 transition-transform duration-200 group-hover:translate-x-1" />
           </>
         )}
       </button>
       <Link href="/authentication/signin">
         <div
-          className={`px-6 py-4 inline border my-3 border-[var(--color-border)]  rounded-full text-sm md:text-lg sm:text-base text-[var(--color-text)] bg-[var(--color-bg-secondary)] transition-all duration-300 items-center justify-center no-color-transition`}
+          className={`my-3 inline-flex items-center justify-center rounded-full px-6 py-3
+               text-sm sm:text-base md:text-lg font-medium
+               border border-[var(--color-border-default)] 
+               text-[var(--color-brand-primary)] bg-[var(--color-bg-surface)] 
+               hover:border-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary)] 
+               transition-all duration-300 shadow-sm hover:shadow-md`}
         >
           Sign in
         </div>

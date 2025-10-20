@@ -237,7 +237,7 @@ const Main = () => {
                           <button
                             className={`flex-shrink-0 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg text-xs font-medium transition-colors ${
                               item.actionType === "primary"
-                                ? "bg-[var(--color-brand-primary)] text-[var(--color-text-primary)] hover:bg-[var(--color-brand-hover)]"
+                                ? "bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] hover:bg-[var(--color-brand-hover)]"
                                 : "border border-[var(--color-border-default)] text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)]"
                             }`}
                           >

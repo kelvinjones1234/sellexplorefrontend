@@ -1,4 +1,4 @@
-// WalletSetupFlow.tsx (no changes needed, as PIN is already included)
+// WalletSetupFlow.tsx
 "use client";
 import React, { useState } from "react";
 import { X } from "lucide-react";
@@ -245,7 +245,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({
 interface ConfirmPinModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (pin: string) => void;
+  onSubmit: (pin: string) => Promise<void>;
   initialPin: string;
   onCheckWalletStatus: () => Promise<boolean>;
 }
@@ -289,8 +289,7 @@ const ConfirmPinModal: React.FC<ConfirmPinModalProps> = ({
 
     setLoading(true);
     try {
-      onSubmit(confirmPinString);
-      onClose();
+      await onSubmit(confirmPinString);
     } catch (err: any) {
       setError(err.message || "Failed to confirm PIN");
     } finally {
@@ -370,10 +369,94 @@ const ConfirmPinModal: React.FC<ConfirmPinModalProps> = ({
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] transition disabled:opacity-50"
                 aria-label="Confirm PIN"
               >
-                {loading ? "Saving..." : "Confirm PIN"}
+                {loading ? "Creating wallet..." : "Confirm PIN"}
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface SuccessModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  message: string;
+}
+
+const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 text-[var(--color-text-secondary)] flex items-center justify-center z-50">
+      <div className="bg-[var(--color-bg-surface)] rounded-3xl shadow-xl w-11/12 max-w-md max-h-[80vh] flex flex-col animate-in fade-in-0 zoom-in-95">
+        <div className="flex-shrink-0 justify-between items-center p-6 border-b border-[var(--color-border-strong)]">
+          <div className="flex justify-between items-center">
+            <h2 className="text-md text-[var(--color-text-primary)]">Success</h2>
+            {/* <button
+              onClick={onClose}
+              className="p-1 rounded-full hover:bg-[var(--color-bg-secondary)] border border-[var(--color-border-strong)] transition"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
+            </button> */}
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <p className="text-sm text-center text-[var(--color-text-secondary)]">{message}</p>
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] transition"
+              aria-label="Close"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface ErrorModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  message: string;
+}
+
+const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, onClose, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 text-[var(--color-text-secondary)] flex items-center justify-center z-50">
+      <div className="bg-[var(--color-bg-surface)] rounded-3xl shadow-xl w-11/12 max-w-md max-h-[80vh] flex flex-col animate-in fade-in-0 zoom-in-95">
+        <div className="flex-shrink-0 justify-between items-center p-6 border-b border-[var(--color-border-strong)]">
+          <div className="flex justify-between items-center">
+            <h2 className="text-md text-[var(--color-text-primary)]">Error</h2>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-full hover:bg-[var(--color-bg-secondary)] border border-[var(--color-border-strong)] transition"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+            {message}
+          </div>
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] transition"
+              aria-label="Close"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -393,12 +476,14 @@ const WalletSetupFlow: React.FC<WalletSetupFlowProps> = ({
   onSuccess,
   banks,
 }) => {
-  const [step, setStep] = useState<"bank" | "pin" | "confirm">("bank");
+  const [step, setStep] = useState<"bank" | "pin" | "confirm" | "success" | "error">("bank");
   const [bankData, setBankData] = useState<{
     accountNumber: string;
     bankCode: string;
   } | null>(null);
   const [pin, setPin] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
   const checkWalletStatus = async () => {
@@ -419,8 +504,8 @@ const WalletSetupFlow: React.FC<WalletSetupFlowProps> = ({
     setStep("pin");
   };
 
-  const handlePinNext = (pin: string) => {
-    setPin(pin);
+  const handlePinNext = (pinString: string) => {
+    setPin(pinString);
     setStep("confirm");
   };
 
@@ -428,17 +513,17 @@ const WalletSetupFlow: React.FC<WalletSetupFlowProps> = ({
     if (!bankData || !confirmedPin) return;
 
     try {
-      await apiClient.setupWallet({
+      const response = await apiClient.setupWallet({
         bank_name: bankData.bankCode,
         account_number: bankData.accountNumber,
         pin: confirmedPin,
         confirm_pin: confirmedPin,
       });
-      await apiClient.activateWallet();
-      onSuccess();
-      onClose();
+      setSuccessMessage(response.message);
+      setStep("success");
     } catch (err: any) {
-      console.error("Wallet setup failed:", err);
+      setErrorMessage(err.message || "Wallet setup failed");
+      setStep("error");
     }
   };
 
@@ -448,6 +533,18 @@ const WalletSetupFlow: React.FC<WalletSetupFlowProps> = ({
       router.push("/dashboard");
     }
     onClose();
+  };
+
+  const handleSuccessClose = () => {
+    onSuccess();
+    onClose();
+  };
+
+  const handleErrorClose = () => {
+    setStep("bank");
+    setBankData(null);
+    setPin(null);
+    setErrorMessage("");
   };
 
   return (
@@ -471,6 +568,16 @@ const WalletSetupFlow: React.FC<WalletSetupFlowProps> = ({
         onSubmit={handleConfirmSubmit}
         initialPin={pin || ""}
         onCheckWalletStatus={checkWalletStatus}
+      />
+      <SuccessModal
+        isOpen={isOpen && step === "success"}
+        onClose={handleSuccessClose}
+        message={successMessage}
+      />
+      <ErrorModal
+        isOpen={isOpen && step === "error"}
+        onClose={handleErrorClose}
+        message={errorMessage}
       />
     </>
   );

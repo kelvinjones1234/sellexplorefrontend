@@ -38,7 +38,8 @@ export default async function PublicLayout({
       <StoreProvider value={storeConfig}>
         <CartProvider>
           <CacheHydrator dehydratedState={dehydratedCache} />
-          <div style={styles} className="min-h-screen flex flex-col">
+          <div className="min-h-screen flex flex-col">
+            {/* <div style={styles} className="min-h-screen flex flex-col"> */}
             <div className="px-3 fixed w-full top-5 z-30">
               <Suspense
                 fallback={

@@ -3,12 +3,10 @@
 import React, { useState } from "react";
 import DesktopNavbar from "./Desktop";
 import MobileNavbar from "./Mobile";
-import { useBookmark } from "@/context/BookmarkContext";
 import { useTheme } from "next-themes"; // ✅ import hook
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { totalItems, toggleBookmark } = useBookmark();
   const { theme, setTheme } = useTheme(); // ✅ get theme and setter
 
   const toggleMobileMenu = () => {
@@ -21,13 +19,11 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="w-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] backdrop-blur-sm rounded-full max-w-[1200px] mx-auto">
+      <header className="w-full border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] rounded-full max-w-[1200px] mx-auto">
         <div className="py-2 sm:py-4 md:py-6 container-padding">
           <DesktopNavbar
             theme={theme ?? "system"} // ✅ pass theme safely
             toggleTheme={toggleTheme}
-            totalItems={totalItems}
-            toggleBookmark={toggleBookmark}
             toggleMobileMenu={toggleMobileMenu}
           />
         </div>
@@ -35,7 +31,6 @@ const Navbar: React.FC = () => {
       <MobileNavbar
         isOpen={isMobileMenuOpen}
         toggleMenu={toggleMobileMenu}
-        totalItems={totalItems}
       />
     </>
   );

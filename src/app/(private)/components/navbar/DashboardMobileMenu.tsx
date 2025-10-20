@@ -90,7 +90,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({ isOpen, toggleMenu }) => {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between p-2 border-b border-[var(--color-border-default)]">
             <div className="px-4 w-full">
               <div className="flex items-center p-2 rounded-[1rem] gap-4 bg-[var(--dashboard-card-bg)]">
                 <div className="h-10 w-10 bg-[var(--color-primary)] rounded-full"></div>

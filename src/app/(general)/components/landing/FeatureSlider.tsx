@@ -49,7 +49,7 @@ export default function FeatureSlider() {
 
       <div
         className="relative w-full overflow-hidden py-3"
-        style={{ backgroundColor: "var(--color-bg)" }}
+        style={{ backgroundColor: "var(--color-bg-surface)" }}
       >
         <div className="flex w-max animate-marquee">
           {duplicatedFeatures.map((feature, index) => (
@@ -57,14 +57,14 @@ export default function FeatureSlider() {
               key={`${feature.id}-${index}`}
               className="mx-3 flex-shrink-0 min-w-[250px] rounded-full p-2 text-center shadow-md transition-transform duration-300 hover:scale-105"
               style={{
-                backgroundColor: "var(--color-surface)",
+                backgroundColor: "var(--color-bg-surface)",
                 boxShadow: `0 4px 6px -1px var(--color-shadow)`,
-                border: `1px solid var(--color-border)`,
+                border: `1px solid var(--color-border-default)`,
               }}
             >
               <h3
                 className="mb-2 text-lg font-semibold"
-                style={{ color: "var(--color-text)" }}
+                style={{ color: "var(--color-text-primary)" }}
               >
                 {feature.title}
               </h3>

@@ -5,7 +5,6 @@ import {
   Palette,
   Type,
   Store,
-  Upload,
   X,
   ChevronDown,
   Sun,
@@ -13,6 +12,7 @@ import {
   AlignLeft,
   AlignCenter,
   Loader2,
+  Plus,
 } from "lucide-react";
 import FloatingLabelInput from "@/app/component/fields/Input";
 import Link from "next/link";
@@ -21,12 +21,6 @@ import { apiClient } from "../api";
 import { toast } from "react-toastify";
 
 // --- Interfaces ---
-interface Image {
-  id: number;
-  url: string;
-  name: string;
-}
-
 interface HeroContent {
   headline: string;
   subheading: string;
@@ -117,14 +111,14 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center font-medium text-sm text-[var(--color-body)] gap-3">
+    <div className="space-y-4 text-[var(--color-text-secondary)]">
+      <div className="flex items-center font-medium text-sm text-[var(--color-text-secondary)] gap-3">
         {mode === "light" ? (
-          <Sun className="w-5 h-5 text-[var(--color-primary)]" />
+          <Sun className="w-5 h-5 text-[var(--color-brand-primary)]" />
         ) : (
-          <Moon className="w-5 h-5 text-[var(--color-primary)]" />
+          <Moon className="w-5 h-5 text-[var(--color-brand-primary)]" />
         )}
-        <span className="font-medium text-[var(--color-text)] capitalize">
+        <span className="font-medium text-[var(--color-text-secondary)] capitalize">
           {mode} Mode
         </span>
       </div>
@@ -134,10 +128,10 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
         {colorPalette.map((color, index) => (
           <button
             key={index}
-            className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-110 ${
+            className={`w-8 h-8 rounded-xl border-2 transition-all hover:scale-110 ${
               selectedColor === color
                 ? "border-[var(--color-border-strong)] ring-2 ring-[var(--color-primary)]"
-                : "border-[var(--color-border)]"
+                : "border-[var(--color-border-default)]"
             }`}
             style={{ backgroundColor: color }}
             onClick={() => onColorChange(color)}
@@ -148,7 +142,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
       {/* Custom Picker Toggle */}
       <button
         onClick={() => setShowCustomPicker(!showCustomPicker)}
-        className="w-full px-4 py-2 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-surface)] rounded-lg text-sm font-medium text-[var(--color-text)] transition-colors border border-[var(--color-border)]"
+        className="w-full px-4 py-2 text-[var(--color-text-secondary)] text-sm rounded-xl font-medium  hover:bg-[var(--color-bg-surface)] bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
       >
         {showCustomPicker ? "Hide" : "Show"} Custom Color Picker
       </button>
@@ -168,9 +162,12 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
 };
 
 interface VisualsTabProps {
-  uploadedImages: Image[];
-  handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  removeImage: (id: number) => void;
+  backgroundImages: (File | string | null)[];
+  handleImageUpload: (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => void;
+  removeImage: (index: number) => void;
   selectedLightColor: string;
   setSelectedLightColor: React.Dispatch<React.SetStateAction<string>>;
   selectedDarkColor: string;
@@ -178,7 +175,7 @@ interface VisualsTabProps {
 }
 
 const VisualsTab: React.FC<VisualsTabProps> = ({
-  uploadedImages,
+  backgroundImages,
   handleImageUpload,
   removeImage,
   selectedLightColor,
@@ -186,53 +183,70 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
   selectedDarkColor,
   setSelectedDarkColor,
 }) => (
-  <div className="space-y-8">
+  <div className="space-y-8 text-[var(--color-text-secondary)]">
     {/* Image Upload Section */}
     <div>
-      <h3 className="text-sm font-medium text-[var(--color-text)] mb-4">
+      <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-4">
         Store Images
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        {uploadedImages.map((image) => (
-          <div key={image.id} className="relative group">
-            <img
-              src={image.url}
-              alt={image.name}
-              className="w-full h-32 object-cover rounded-lg border border-[var(--color-border)]"
-            />
-            <button
-              onClick={() => removeImage(image.id)}
-              className="absolute -top-2 -right-2 bg-[var(--color-primary)] text-[var(--color-bg)] rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <X className="w-4 h-4" />
-            </button>
+        {backgroundImages.map((image, index) => (
+          <div key={index} className="relative group">
+            {image ? (
+              <>
+                <img
+                  src={
+                    typeof image === "string"
+                      ? image
+                      : URL.createObjectURL(image)
+                  }
+                  alt={`Store image ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-xl border border-[var(--color-border-default)] cursor-pointer"
+                  onClick={() => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = "image/*";
+                    input.onchange = (e: any) =>
+                      handleImageUpload(e, index);
+                    input.click();
+                  }}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeImage(index);
+                  }}
+                  className="absolute top-2 right-2 bg-red-500/80 bg-red-500 text-white rounded-full p-1 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-[var(--color-border-default)] rounded-xl cursor-pointer hover:border-[var(--color-border-strong)] transition-colors">
+                <Plus className="w-8 h-8 text-[var(--color-text-muted)] mb-2" />
+                <span className="text-sm text-[var(--color-text-muted)]">
+                  Upload Image
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, index)}
+                  className="hidden"
+                />
+              </label>
+            )}
           </div>
         ))}
-        {uploadedImages.length < 3 && (
-          <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:border-[var(--color-border-strong)] transition-colors">
-            <Upload className="w-8 h-8 text-[var(--color-text-muted)] mb-2" />
-            <span className="text-sm text-[var(--color-text-muted)]">
-              Upload Image
-            </span>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-          </label>
-        )}
       </div>
-      <p className="text-sm text-[var(--color-text-muted)]">
-        {uploadedImages.length}/3 images uploaded
+      <p className="text-sm text-[var(--color-text-secondary)]">
+        {backgroundImages.filter((img) => img !== null).length}/3 images uploaded
       </p>
     </div>
 
     {/* Brand Colors */}
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-sm font-medium text-[var(--color-text)]">
+        <h3 className="text-sm font-medium text-[var(--color-text-primary)]">
           Brand Colors
         </h3>
         <button
@@ -240,7 +254,7 @@ const VisualsTab: React.FC<VisualsTabProps> = ({
             setSelectedLightColor("#f97316");
             setSelectedDarkColor("#fb923c");
           }}
-          className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
+          className="flex items-center gap-2 text-sm text-[var(--color-brand-primary)] hover:text-[var(--color-brand-hover)] transition-colors"
         >
           Reset
         </button>
@@ -267,7 +281,7 @@ interface HeroTabProps {
 }
 
 const HeroTab: React.FC<HeroTabProps> = ({ heroContent, setHeroContent }) => (
-  <div className="space-y-6">
+  <div className="space-y-6 text-[var(--color-text-secondary)]">
     <div className="text-center mb-8">
       <div className="w-16 h-16 bg-[var(--card-bg-2)] rounded-full flex items-center justify-center mx-auto mb-4">
         <Type className="w-8 h-8 text-[var(--card-text-2)]" />
@@ -306,7 +320,7 @@ const HeroTab: React.FC<HeroTabProps> = ({ heroContent, setHeroContent }) => (
         </div>
       ))}
       <div>
-        <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
+        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
           Content Position
         </label>
         <div className="flex gap-3">
@@ -320,10 +334,10 @@ const HeroTab: React.FC<HeroTabProps> = ({ heroContent, setHeroContent }) => (
                   position: pos as "left" | "center",
                 }))
               }
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border transition-all ${
                 heroContent.position === pos
-                  ? "bg-[var(--color-bg-secondary)] border-[var(--color-border-strong)] text-[var(--color-primary)]"
-                  : "bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                  ? "border-[var(--color-border-strong)] text-[var(--color-brand-primary)]"
+                  : "border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]"
               }`}
             >
               {pos === "left" ? (
@@ -346,7 +360,7 @@ interface StoreTabProps {
 }
 
 const StoreTab: React.FC<StoreTabProps> = ({ storeInfo, setStoreInfo }) => (
-  <div className="space-y-6">
+  <div className="space-y-6 text-[var(--color-text-secondary)]">
     <div className="text-center mb-8">
       <div className="w-16 h-16 bg-[var(--card-bg-3)] rounded-full flex items-center justify-center mx-auto mb-4">
         <Store className="w-8 h-8 text-[var(--card-text-3)]" />
@@ -359,7 +373,7 @@ const StoreTab: React.FC<StoreTabProps> = ({ storeInfo, setStoreInfo }) => (
       </p>
     </div>
 
-    <div className="bg-[var(--color-bg)] border border-[var(--color-border)] p-6 rounded-xl">
+    <div className="bg-[var(--color-bg)] border border-[var(--color-border-default)] p-6 rounded-xl">
       <h4 className="font-medium text-sm text-[var(--color-heading)] mb-4">
         Display Preferences
       </h4>
@@ -381,12 +395,12 @@ const StoreTab: React.FC<StoreTabProps> = ({ storeInfo, setStoreInfo }) => (
           }
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
             storeInfo.displayLatestFirst
-              ? "bg-[var(--color-primary)]"
-              : "bg-[var(--color-border)]"
+              ? "bg-[var(--color-brand-primary)]"
+              : "bg-[var(--color-border-default)]"
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-[var(--color-bg)] transition-transform ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-[var(--color-on-brand)] transition-transform ${
               storeInfo.displayLatestFirst ? "translate-x-6" : "translate-x-1"
             }`}
           />
@@ -399,7 +413,9 @@ const StoreTab: React.FC<StoreTabProps> = ({ storeInfo, setStoreInfo }) => (
 // --- Main Component ---
 const Main: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("visuals");
-  const [uploadedImages, setUploadedImages] = useState<Image[]>([]);
+  const [backgroundImages, setBackgroundImages] = useState<(File | string | null)[]>(
+    Array(3).fill(null)
+  );
   const [selectedLightColor, setSelectedLightColor] =
     useState<string>("#f97316");
   const [selectedDarkColor, setSelectedDarkColor] = useState<string>("#fb923c");
@@ -450,29 +466,11 @@ const Main: React.FC = () => {
           displayLatestFirst: config.latest_first ?? true,
         });
 
-        const images: Image[] = [];
-        if (config.background_image_one) {
-          images.push({
-            id: Date.now() + Math.random(),
-            url: config.background_image_one,
-            name: "Image 1",
-          });
-        }
-        if (config.background_image_two) {
-          images.push({
-            id: Date.now() + Math.random() + 1,
-            url: config.background_image_two,
-            name: "Image 2",
-          });
-        }
-        if (config.background_image_three) {
-          images.push({
-            id: Date.now() + Math.random() + 2,
-            url: config.background_image_three,
-            name: "Image 3",
-          });
-        }
-        setUploadedImages(images);
+        setBackgroundImages([
+          config.background_image_one || null,
+          config.background_image_two || null,
+          config.background_image_three || null,
+        ]);
       } catch (err: any) {
         const errorMessage = err.message || "Failed to load configurations";
         setError(errorMessage);
@@ -489,54 +487,38 @@ const Main: React.FC = () => {
     localStorage.setItem("activeTab", activeTab);
   }, [activeTab]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    const remainingSlots = 3 - uploadedImages.length;
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    if (files.length > remainingSlots) {
-      toast.error(
-        `You can only upload ${remainingSlots} more image${
-          remainingSlots !== 1 ? "s" : ""
-        }`
-      );
+    // Validate file size (e.g., 5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(`File ${file.name} is too large. Maximum size is 5MB.`);
       return;
     }
 
-    files.forEach((file) => {
-      // Validate file size (e.g., 5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`File ${file.name} is too large. Maximum size is 5MB.`);
-        return;
-      }
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error(`File ${file.name} is not a valid image.`);
+      return;
+    }
 
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error(`File ${file.name} is not a valid image.`);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e: ProgressEvent<FileReader>) => {
-        if (e.target?.result) {
-          setUploadedImages((prev) => [
-            ...prev,
-            {
-              id: Date.now() + Math.random(),
-              url: e.target?.result as string,
-              name: file.name,
-            },
-          ]);
-        }
-      };
-      reader.onerror = () => {
-        toast.error(`Failed to read file ${file.name}`);
-      };
-      reader.readAsDataURL(file);
+    setBackgroundImages((prev) => {
+      const newImages = [...prev];
+      newImages[index] = file;
+      return newImages;
     });
   };
 
-  const removeImage = (id: number) => {
-    setUploadedImages((prev) => prev.filter((img) => img.id !== id));
+  const removeImage = (index: number) => {
+    setBackgroundImages((prev) => {
+      const newImages = [...prev];
+      newImages[index] = null;
+      return newImages;
+    });
   };
 
   const handleUpdate = async () => {
@@ -556,12 +538,15 @@ const Main: React.FC = () => {
 
       const img_number = ["one", "two", "three"];
 
-      // Append images - only new ones (data URLs)
-      uploadedImages.forEach((img, index) => {
-        if (img.url.startsWith("data:image")) {
-          const file = dataURLtoFile(img.url, img.name);
-          formData.append(`background_image_${img_number[index]}`, file);
+      // Process images
+      backgroundImages.forEach((image, i) => {
+        const key = `background_image_${img_number[i]}`;
+        if (image instanceof File) {
+          formData.append(key, image);
+        } else if (image === null) {
+          formData.append(key, "");
         }
+        // else string, do not append to keep existing
       });
 
       await apiClient.updateConfiguration(formData);
@@ -580,25 +565,12 @@ const Main: React.FC = () => {
     window.location.reload();
   };
 
-  // Utility to convert data URL to File
-  const dataURLtoFile = (dataurl: string, filename: string): File => {
-    const arr = dataurl.split(",");
-    const mime = arr[0].match(/:(.*?);/)![1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new File([u8arr], filename, { type: mime });
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
         <div className="flex items-center gap-3">
-          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
-          <span className="text-[var(--color-text)]">
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-brand-primary)]" />
+          <span className="text-[var(--color-text-secondary)]">
             Loading configurations...
           </span>
         </div>
@@ -613,7 +585,7 @@ const Main: React.FC = () => {
           <div className="text-red-500 mb-4">Error: {error}</div>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
+            className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors"
           >
             Retry
           </button>
@@ -623,13 +595,13 @@ const Main: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
+    <div className="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)]">
       {/* Header */}
-      <header className="sticky top-0 bg-[var(--color-bg)] border-b border-[var(--color-border-secondary)] px-4 py-3 z-10">
+      <header className="sticky top-0 bg-[var(--color-bg-primary)] border-b border-[var(--color-border-default)] px-4 py-3 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
             <Link href="http://localhost:3000/dashboard/my-store/">
-              <span className="font-medium text-[var(--color-heading)] hover:text-[var(--color-primary)] transition-colors">
+              <span className="font-medium text-[var(--color-text-primary)] hover:text-[var(--color-brand-primary)] transition-colors">
                 Store settings
               </span>
             </Link>
@@ -637,19 +609,19 @@ const Main: React.FC = () => {
             <span>Configurations</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[var(--color-primary)]">⚡</span>
-            <span className="text-sm font-medium text-[var(--color-text)]">
+            <span className="text-[var(--color-brand-primary)]">⚡</span>
+            <span className="text-sm font-medium text-[var(--color-text-secondary)]">
               Quick Actions
             </span>
-            <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
           </div>
         </div>
       </header>
 
-      <div className="px-4 pb-8">
+      <div className="pb-8">
         {/* Tab Navigation */}
         <div className="bg-[var(--color-bg)] mb-8">
-          <div className="border-b border-[var(--color-border-secondary)] rounded-t-xl overflow-hidden">
+          <div className="px-4 border-b border-[var(--color-border-default)] rounded-t-xl overflow-hidden">
             <nav className="flex overflow-x-auto no-scrollbar gap-6">
               {tabs.map((tab) => (
                 <button
@@ -658,8 +630,8 @@ const Main: React.FC = () => {
                   className={`py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-all
                     ${
                       activeTab === tab.id
-                        ? "border-[var(--color-primary)] text-[var(--color-primary)]"
-                        : "border-transparent hover:text-[var(--color-text)] text-[var(--color-text-secondary)]"
+                        ? "border-[var(--color-primary)] text-[var(--color-brand-primary)]"
+                        : "relative py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                     }`}
                 >
                   {tab.label}
@@ -671,7 +643,7 @@ const Main: React.FC = () => {
           <div className="py-6 md:py-8 px-4 max-w-[900px] mx-auto">
             {activeTab === "visuals" && (
               <VisualsTab
-                uploadedImages={uploadedImages}
+                backgroundImages={backgroundImages}
                 handleImageUpload={handleImageUpload}
                 removeImage={removeImage}
                 selectedLightColor={selectedLightColor}
@@ -693,16 +665,16 @@ const Main: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex max-w-[900px] mx-auto flex-col text-sm sm:flex-row gap-3 justify-end">
+        <div className="flex max-w-[900px] mx-auto text-sm gap-3 justify-end px-4">
           <button
-            className="px-6 py-3 border border-[var(--color-border)] text-[var(--color-text)] rounded-lg font-medium hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
+            className="px-6 py-3 text-[var(--color-text-secondary)] rounded-xl font-medium  hover:bg-[var(--color-bg-surface)] bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
             onClick={handleCancel}
             disabled={updating}
           >
             Cancel
           </button>
           <button
-            className="px-6 py-3 bg-[var(--color-primary)] text-white justify-center rounded-lg font-medium hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-6 py-3 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] justify-center rounded-xl font-medium hover:bg-[var(--color-brand-hover)] transition-colors disabled:opacity-50 flex items-center gap-2"
             onClick={handleUpdate}
             disabled={updating}
           >

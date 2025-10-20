@@ -14,7 +14,7 @@ interface NavProps {
   isSearchOpen: boolean;
   setIsSearchOpen: (val: boolean) => void;
   searchQuery: string;
-  setSearchQuery: (query: string) => void; 
+  setSearchQuery: (query: string) => void;
   isSearchLoading: boolean;
 }
 
@@ -31,17 +31,17 @@ const Nav: React.FC<NavProps> = ({
   const searchRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="relative flex items-center justify-between w-full h-14">
-      <div className="flex-shrink-0 z-20">
+    <div className="relative flex items-center z-40 justify-between w-full h-14">
+      <div className="flex-shrink-0">
         <Logo />
       </div>
 
-      <nav className="hidden md:flex flex-1 justify-center space-x-8">
+      <nav className="hidden md:flex flex-1 text-[var(--color-text-secondary)] justify-center space-x-8">
         {navItems.map(({ label, href }) => (
           <Link
             key={href}
             href={href}
-            className="hover:text-[var(--color-primary)] font-medium"
+            className="hover:text-[var(--color-brand-primary)] font-medium"
           >
             {label}
           </Link>
@@ -56,14 +56,16 @@ const Nav: React.FC<NavProps> = ({
         <ThemeToggleButton theme={theme} toggleTheme={toggleTheme} />
         <button
           onClick={() => setIsSearchOpen(true)}
-          className="p-2 ml-4 rounded-lg hover:text-[var(--color-primary)]"
+          className="p-2 ml-4 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-brand-primary)]"
         >
           <SearchIcon size={22} />
         </button>
-        <CartButton />
+        <div className="text-[var(--color-text-secondary)]">
+          <CartButton />
+        </div>
         <button
           onClick={toggleMobileMenu}
-          className="md:hidden ml-4 p-2 hover:text-[var(--color-primary)] rounded-lg"
+          className="md:hidden ml-4 p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-brand-primary)] rounded-lg"
         >
           <Menu size={22} />
         </button>
@@ -72,7 +74,7 @@ const Nav: React.FC<NavProps> = ({
       {isSearchOpen && (
         <div
           ref={searchRef}
-          className="absolute inset-y-0 right-0 flex items-center z-50"
+          className="absolute inset-y-0 right-0 flex items-center"
         >
           <div className="flex items-center w-full max-w-[700px]">
             <Search
@@ -84,7 +86,7 @@ const Nav: React.FC<NavProps> = ({
           </div>
           <button
             onClick={() => setIsSearchOpen(false)}
-            className="p-1 rounded-lg hover:text-[var(--color-primary)]"
+            className="p-1 rounded-lg hover:text-[var(--color-brand-primary)]"
           >
             <X size={22} />
           </button>

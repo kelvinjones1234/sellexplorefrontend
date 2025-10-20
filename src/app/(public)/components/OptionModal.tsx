@@ -139,22 +139,22 @@ const OptionModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-[var(--color-bg)] rounded-2xl w-full max-w-md mx-auto shadow-xl max-h-[80vh] flex flex-col animate-in fade-in-0 zoom-in-95">
+      <div className="bg-[var(--color-bg-surface)] rounded-3xl w-full max-w-md mx-auto shadow-xl max-h-[80vh] flex flex-col animate-in fade-in-0 zoom-in-95">
         <div className="flex-shrink-0 p-6 pb-0">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">
+            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
               Select Options
             </h2>
             <button
               onClick={onClose}
-              className="p-1 rounded-full hover:bg-[var(--color-border)] border border-[var(--color-border)] transition"
+              className="p-1 rounded-full hover:bg-[var(--color-bg-secondary)] border border-[var(--color-border-strong)] transition"
               aria-label="Close modal"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
           </div>
           {options.some((opt) => opt.note) && (
-            <div className="text-sm text-gray-500 mb-4">
+            <div className="text-sm text-[var(--color-text-secondary)] mb-4">
               Note: {options.find((opt) => opt.note)?.note?.note || ""}
             </div>
           )}
@@ -172,7 +172,7 @@ const OptionModal = ({
                 return (
                   <div
                     key={index}
-                    className={`p-4 border border-[var(--color-border-secondary)] ${
+                    className={`p-4 border border-[var(--color-border-default)] ${
                       isFirst ? "rounded-t-2xl" : ""
                     } ${isLast ? "rounded-b-2xl" : ""} ${
                       !isLast ? "border-b-0" : ""
@@ -184,13 +184,13 @@ const OptionModal = ({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleOptionToggle(option)}
-                          className="w-4 h-4 text-[var(--color-primary)] border-[var(--color-border)] focus:ring-[var(--color-primary)] rounded"
+                          className="w-4 h-4 text-[var(--color-brand-primary)] border-[var(--color-border-strong)] focus:ring-[var(--color-brand-primary)] rounded"
                         />
                         <div className="ml-3">
-                          <p className="text-sm font-medium text-[var(--color-text)]">
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
                             {option}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-[var(--color-text-secondary)]">
                             NGN {price.toLocaleString()}
                           </p>
                         </div>
@@ -198,20 +198,20 @@ const OptionModal = ({
                     </label>
                     {isSelected && (
                       <div className="mt-2 flex items-center justify-end">
-                        <div className="flex items-center border border-[var(--color-primary)] rounded-full">
+                        <div className="flex items-center border border-[var(--color-border-strong)] rounded-full">
                           <button
                             onClick={() => decrementQuantity(option)}
-                            className="p-2 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-l-full transition"
+                            className="p-2 text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-l-full transition"
                             aria-label="Decrease quantity"
                           >
                             <Minus size={14} />
                           </button>
-                          <span className="px-3 py-1 text-sm text-[var(--color-primary)]">
+                          <span className="px-3 py-1 text-sm text-[var(--color-brand-primary)]">
                             {quantity}
                           </span>
                           <button
                             onClick={() => incrementQuantity(option)}
-                            className="p-2 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-r-full transition"
+                            className="p-2 text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-r-full transition"
                             aria-label="Increase quantity"
                           >
                             <Plus size={14} />
@@ -223,7 +223,7 @@ const OptionModal = ({
                 );
               })
             ) : (
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-[var(--color-text-secondary)]">
                 No options available for this product.
               </div>
             )}
@@ -234,7 +234,7 @@ const OptionModal = ({
           <div className="mt-6">
             <button
               onClick={handleUpdateCart}
-              className="px-4 py-4 rounded-lg w-full text-sm text-white bg-[var(--color-primary)] font-semibold transition hover:bg-[var(--color-primary-hover)]"
+              className="px-4 py-4 rounded-xl w-full text-sm text-[var(--color-on-brand)] bg-[var(--color-brand-primary)] font-semibold transition hover:bg-[var(--color-brand-hover)]"
               aria-label="Update cart selections"
             >
               Update Cart

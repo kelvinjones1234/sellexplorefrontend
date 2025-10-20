@@ -74,7 +74,7 @@ export default function Main() {
     } finally {
       setIsFetchingLogo(false);
     }
-  };
+  }; 
 
   const fetchData = async () => {
     setLoading(true);
@@ -141,7 +141,7 @@ export default function Main() {
     }
   };
 
-  // === Settings Cards ===
+  // === Settings Cards === 
   const settingsCards = [
     {
       icon: Settings,
@@ -150,7 +150,7 @@ export default function Main() {
         "Custom color, Opening & closing hours, View modes and Currencies",
       action: "Manage Configurations",
       color: "var(--color-brand-primary)",
-      link: "configurations",
+      link: "my-store/configurations",
     },
     {
       icon: Store,
@@ -159,7 +159,7 @@ export default function Main() {
         "Basic details, Location details, Social links and Extra info",
       action: "Manage Details",
       color: "var(--color-accent)",
-      link: "details",
+      link: "my-store/details",
     },
     {
       icon: CreditCard,
@@ -167,7 +167,7 @@ export default function Main() {
       description: "Payment options, Direct checkout & Withdrawal settings",
       action: "Payment Settings",
       color: "var(--color-success)",
-      link: "payment",
+      link: "/dashboard/payment",
     },
     {
       icon: MapPin,
@@ -175,7 +175,7 @@ export default function Main() {
       description: "Set areas you want to with corresponding fees",
       action: "Manage Delivery Areas",
       color: "var(--color-success)",
-      link: "delivery-location",
+      link: "my-store/delivery-location",
     },
     {
       icon: Users,
@@ -191,7 +191,7 @@ export default function Main() {
       description: "Configure Whatsapp numbers, Instagram, Delivery & Pickup",
       action: "Manage Checkout",
       color: "var(--color-danger)",
-      link: "checkout-options",
+      link: "my-store/checkout-options",
     },
   ];
 
@@ -306,7 +306,6 @@ export default function Main() {
               src={profileImage}
               alt="Store Profile"
               className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-[var(--color-bg-surface)] shadow-lg object-cover"
-              onError={(e) => (e.currentTarget.src = "/api/placeholder/80/80")}
             />
             <label className="absolute bottom-0 right-0 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] p-1.5 rounded-full hover:bg-[var(--color-brand-hover)] transition-colors cursor-pointer">
               <Edit className="w-3 h-3" />
@@ -393,7 +392,7 @@ export default function Main() {
                   <div className="flex items-start gap-4">
                     <div
                       className="p-2 rounded-lg"
-                      style={{
+                      style={{ 
                         backgroundColor: `${card.color}20`,
                         color: card.color,
                       }}
@@ -408,7 +407,7 @@ export default function Main() {
                         {card.description}
                       </p>
                       {card.link ? (
-                        <Link href={`/dashboard/my-store/${card.link}`}>
+                        <Link href={`${card.link}`}>
                           <button className="text-[var(--color-brand-primary)] text-xs font-medium hover:text-[var(--color-brand-hover)] transition-colors flex items-center gap-1">
                             {card.action}
                             <ExternalLink className="w-3 h-3" />

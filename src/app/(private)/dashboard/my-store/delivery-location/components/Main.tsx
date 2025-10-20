@@ -315,7 +315,7 @@ const Main = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-secondary)]">
       {/* Toast Container */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {toasts.map((toast) => (
@@ -338,11 +338,11 @@ const Main = () => {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 bg-[var(--color-bg)] border-b border-[var(--color-border-secondary)] px-4 py-3 z-10 backdrop-blur-sm bg-opacity-95">
+      <header className="sticky top-0 bg-[var(--color-bg-primary)] border-b border-[var(--color-border-default)] px-4 py-3 z-10 backdrop-blur-sm bg-opacity-95">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
             <Link href="/dashboard/my-store/">
-              <span className="font-medium text-[var(--color-heading)] hover:text-[var(--color-primary)] transition-colors">
+              <span className="font-medium text-[var(--color-text-primary)] hover:text-[var(--color-brand-primary)] transition-colors">
                 Store settings
               </span>
             </Link>
@@ -352,7 +352,7 @@ const Main = () => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="text-[var(--color-primary)]">⚡</span>
-              <span className="text-sm font-medium text-[var(--color-text)]">
+              <span className="text-sm font-medium text-[var(--color-text-secondary)]">
                 Quick Actions
               </span>
               <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
@@ -369,15 +369,15 @@ const Main = () => {
             <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
               <MapPin className="w-8 h-8" />
             </div>
-            <h2 className="text-center text-xl font-bold text-[var(--color-heading)] mb-3">
+            <h2 className="text-center text-xl font-bold text-[var(--color-text-primary)] mb-3">
               Delivery Areas
             </h2>
-            <div className="text-sm text-[var(--color-text-muted)] max-w-[600px] mx-auto bg-[var(--card-bg-2)] p-6 rounded-2xl border border-[var(--color-border-secondary)]">
+            <div className="text-sm text-[var(--color-text-primary)] max-w-[600px] mx-auto bg-[var(--color-bg-surface)] p-6 rounded-3xl border border-[var(--color-border-default)]">
               <p className="mb-2">
                 Set up your delivery zones and fees to help customers calculate
                 shipping costs during checkout.
               </p>
-              <p className="text-xs opacity-75">
+              <p className="text-xs text-[var(--color-brand-primary)]">
                 Examples: Lekki Phase 1, Victoria Island, Abuja Central, Port
                 Harcourt, etc.
               </p>
@@ -420,13 +420,13 @@ const Main = () => {
               {deliveryAreas.map((area) => (
                 <div
                   key={area.id}
-                  className={`bg-[var(--color-bg-secondary)] border border-[var(--color-border-secondary)] rounded-2xl p-4 transition-all duration-200 ${
+                  className={`bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] rounded-2xl p-4 transition-all duration-200 ${
                     editingIds.has(area.id)
-                      ? "ring-[var(--color-primary)] ring-opacity-20 border-[var(--color-primary)]"
+                      ? "ring-[var(--color-primary)] ring-opacity-20 border-[var(--color-border-default)]"
                       : "hover:shadow-sm"
                   }`}
                 >
-                  <div className="flex flex-col sm:flex-row items-start gap-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
                     {/* Location Input */}
                     <div className="flex-1 w-full">
                       {editingIds.has(area.id) ? (
@@ -494,7 +494,7 @@ const Main = () => {
                           <button
                             onClick={() => handleSave(area.id)}
                             disabled={savingId === area.id}
-                            className="inline-flex items-center gap-1 px-3 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50"
+                            className="px-4 py-2 rounded-lg text-sm font-medium  bg-[var(--color-brand-primary)]  hover:bg-[var(--color-brand-hover)]  text-[var(--color-on-brand)]  transition"
                           >
                             {savingId === area.id && (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -503,7 +503,7 @@ const Main = () => {
                           </button>
                           <button
                             onClick={() => handleCancelEdit(area.id)}
-                            className="inline-flex items-center gap-1 px-3 py-2 bg-gray-500 text-white rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
+                            className="px-4 py-2 rounded-lg text-sm font-medium  bg-[var(--color-bg-secondary)]  hover:bg-[var(--color-bg-primary)]  text-[var(--color-text-secondary)]  transition"
                           >
                             Cancel
                           </button>
@@ -512,7 +512,7 @@ const Main = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEdit(area.id)}
-                            className="p-2 text-[var(--color-primary)] rounded-lg transition-colors"
+                            className="p-2 text-[var(--color-text-secondary)] rounded-lg transition-colors"
                             title="Edit delivery area"
                           >
                             <Edit className="w-4 h-4" />
@@ -540,10 +540,10 @@ const Main = () => {
 
           {/* Action Buttons */}
           {!isLoading && deliveryAreas.length > 0 && (
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex gap-3">
               <button
                 onClick={handleAddNewArea}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-[var(--color-primary)] text-white rounded-2xl font-medium hover:bg-[var(--color-primary-hover)] transition-colors"
+                className="bg-[var(--color-bg-secondary)] px-4 text-[var(--color-brand-primary)] py-2 rounded-lg text-sm font-semibold mt-2 flex items-center gap-2 hover:text-[var(--color-brand-hover)]"
                 disabled={isLoading}
               >
                 <Plus className="w-4 h-4" />

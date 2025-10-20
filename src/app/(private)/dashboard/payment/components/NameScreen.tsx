@@ -98,22 +98,22 @@ const NameScreen: React.FC<NameScreenProps> = ({
               </svg>
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <h3 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
             Setup Payments
           </h3>
-          <h4 className="text-lg font-medium text-gray-700 mb-4">
+          <h4 className="text-lg font-medium text-[var(--color-text-secondary)] mb-4">
             What is your Legal Name?
           </h4>
-          <p className="text-gray-600 mb-6 text-sm">
+          <p className="text-[var(--color-text-primary)] mb-6 text-sm">
             Your name on Government IDs
           </p>
 
           {/* Important Note */}
           <div className="bg-yellow-50 p-4 rounded-lg text-left mb-6">
             <div className="flex items-start gap-2">
-              <span className="text-yellow-600 mt-1">⚠</span>
+              <span className="text-yellow-600">⚠</span>
               <div>
-                <p className="text-sm font-medium text-gray-900">Important!</p>
+                <p className="text-sm font-medium text-gray-900 ml-2">Important!</p>
                 <ul className="text-sm text-gray-600 list-disc list-inside ml-2">
                   <li>Please enter your real name, not your business name.</li>
                   <li>
@@ -155,7 +155,7 @@ const NameScreen: React.FC<NameScreenProps> = ({
           <button
             onClick={handleNext}
             disabled={loading || !firstName || !lastName}
-            className="w-full mt-8 px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50"
+            className="w-full mt-8 px-6 py-3 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-xl font-medium hover:bg-[var(--color-brand-hover)] transition-colors disabled:opacity-50"
           >
             {loading ? "Submitting..." : "Next"}
           </button>

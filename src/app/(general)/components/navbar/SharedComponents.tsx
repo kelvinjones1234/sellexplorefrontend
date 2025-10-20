@@ -33,7 +33,7 @@ export const ThemeToggleButton: React.FC<ThemeToggleButtonProps> = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-lg hover:text-[var(--color-primary)] transition-colors"
+      className="p-2 rounded-lg hover:text-[var(--color-brand-primary)] transition-colors"
       aria-label="Toggle theme"
     >
       {resolvedTheme === "dark" ? <Sun size={22} /> : <Moon size={22} />}
@@ -46,19 +46,4 @@ interface BookmarkButtonProps {
   toggleBookmark: () => void;
 }
 
-export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
-  totalItems,
-  toggleBookmark,
-}) => (
-  <button
-    className="relative p-2 rounded-lg hover:text-[var(--color-primary)] transition-colors"
-    onClick={toggleBookmark}
-  >
-    <Bookmark size={22} />
-    {totalItems > 0 && (
-      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-        {totalItems}
-      </span>
-    )}
-  </button>
-);
+

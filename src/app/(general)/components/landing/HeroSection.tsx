@@ -81,12 +81,12 @@ const HeroSection = () => {
           content: "|";
           display: inline-block;
           animation: blink 1s infinite;
-          color: var(--color-primary);
+          color: var(--color-brand-primary);
           margin-left: 2px;
         }
 
         .social-text {
-          color: var(--color-primary);
+          color: var(--color-brand-primary);
           position: relative;
           min-width: 140px;
           display: inline-block;
@@ -94,7 +94,7 @@ const HeroSection = () => {
         }
 
         .hero-title {
-          color: var(--color-text);
+          color: var(--color-text-primary);
         }
 
         .hero-subtitle {
@@ -193,7 +193,7 @@ const HeroSection = () => {
                   </span>
                 </h1>
 
-                <p className=" text-[clamp(1rem,2vw,1.5rem)] mx-auto max-w-[500px] lg:max-w-[700px] hero-subtitle">
+                <p className="text-[clamp(1rem,2vw,1.5rem)] mx-auto max-w-[500px] lg:max-w-[700px] hero-subtitle">
                   If customers can't find you online, your business is
                   invisible. Put your brand on Google with a professional
                   website and a product catalog that makes buying effortless.
@@ -206,9 +206,9 @@ const HeroSection = () => {
                 </div>
               </div>
             </div>
-            <div className="mt-10">
+            {/* <div className="mt-10">
               <FeatureSlider />
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

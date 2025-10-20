@@ -1,4 +1,3 @@
-
 "use client";
 import React from "react";
 import {
@@ -128,23 +127,23 @@ const DetailModal: React.FC<DetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[var(--color-bg)] flex flex-col">
+    <div className="fixed inset-0 bg-[var(--color-bg-primary)] z-[999] flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 sticky top-0 z-20 bg-[var(--color-bg)]/80 backdrop-blur-md border-b border-[var(--color-border)]">
+      <div className="flex-shrink-0 sticky top-0 bg-[var(--color-bg)]/80 backdrop-blur-md border-b border-[var(--color-border-strong)]">
         <div className="flex items-center justify-between p-6 max-w-[1200px] mx-auto">
           <button
             onClick={onClose}
             aria-label="Share"
-            className="p-1 rounded-full hover:bg-[var(--color-border)] border border-[var(--color-border)] transition"
+            className="p-1 rounded-full hover:bg-[var(--color-bg-secondary)] transition"
           >
-            <Share className="w-5 h-5 text-gray-500" />
+            <Share className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="p-1 rounded-full hover:bg-[var(--color-border)] border border-[var(--color-border)] transition"
+            className="p-1 rounded-full hover:bg-[var(--color-bg-secondary)] border border-[var(--color-border-strong)] transition"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
       </div>
@@ -155,7 +154,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
           {/* Left: Images */}
           <div className="relative bg-[var(--color-bg)] p-6 flex-1 lg:w-1/2">
             {discountPercent !== null && (
-              <span className="absolute top-6 left-6 bg-[var(--color-primary)] text-white text-xs font-semibold px-3 py-1 rounded-full z-10 shadow-lg">
+              <span className="absolute top-6 left-6 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] text-xs font-semibold px-3 py-1 rounded-full z-10 shadow-lg">
                 {discountPercent}% OFF
               </span>
             )}
@@ -200,7 +199,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                     className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                       index === currentImageIndex
                         ? "border-[var(--color-primary)]"
-                        : "border-[var(--color-border)]"
+                        : "border-[var(--color-border-default)]"
                     }`}
                   >
                     <img
@@ -221,15 +220,15 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 {displayProduct.name}
               </h1>
               <div className="flex items-center gap-3">
-                <span className="text-lg font-semibold">
+                <span className="text-lg font-semibold text-[var(--color-brand-primary)]">
                   NGN {effectivePrice.toLocaleString()}
                 </span>
                 {discountPrice !== null && (
                   <>
-                    <span className="text-base text-gray-500 line-through">
+                    <span className="text-base text-[var(--color-text-secondary)] line-through">
                       NGN {price.toLocaleString()}
                     </span>
-                    <span className="bg-[var(--color-primary)] text-[var(--color-text)] text-xs px-2 py-1 rounded-lg">
+                    <span className="bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] text-xs px-2 py-1 rounded-lg">
                       {discountPercent}% OFF
                     </span>
                   </>
@@ -248,7 +247,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                   Length - {displayProduct.length}
                 </div>
               )}
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[var(--color-text-secondary)]">
                 Can be made in other color combinations
               </p>
             </div>
@@ -264,10 +263,10 @@ const DetailModal: React.FC<DetailModalProps> = ({
 
             {displayProduct.description && (
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-[var(--color-text)]">
+                <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
                   Description
                 </h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
+                <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
                   {displayProduct.description}
                 </p>
               </div>
@@ -280,12 +279,12 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 </h3>
                 <button
                   onClick={openOptionModal}
-                  className="text-[var(--color-primary)] text-xs font-medium hover:text-[var(--color-primary-hover)] transition"
+                  className="text-[var(--color-brand-primary)] text-xs font-medium hover:text-[var(--color-brand-hover)] transition"
                 >
                   See Options →
                 </button>
               </div>
-              <div className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-[var(--color-border-default)] rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-6 h-6 grid grid-cols-2 gap-0.5">
                     <div className="bg-gray-300 rounded-sm"></div>
@@ -297,7 +296,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                     Options
                   </span>
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-[var(--color-text-secondary)]">
                   {displayProduct.options[0]?.options?.length || 0} Options
                 </span>
               </div>
@@ -307,20 +306,20 @@ const DetailModal: React.FC<DetailModalProps> = ({
             <div className="hidden lg:block pt-6">
               {totalQuantity > 0 ? (
                 <div className="w-full flex justify-center">
-                  <div className="inline-flex items-center border border-[var(--color-primary)] rounded-full justify-center">
+                  <div className="inline-flex items-center border border-[var(--color-border-strong)] rounded-full justify-center">
                     <button
                       onClick={handleDecrement}
-                      className="p-3 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-l-full transition"
+                      className="p-3 text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-l-full transition"
                       aria-label="Decrease quantity"
                     >
                       <Minus size={16} />
                     </button>
-                    <span className="px-4 py-2 text-sm text-[var(--color-primary)] font-semibold">
+                    <span className="px-4 py-2 text-sm text-[var(--color-brand-primary)] font-semibold">
                       {totalQuantity}
                     </span>
                     <button
                       onClick={handleIncrement}
-                      className="p-3 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-r-full transition"
+                      className="p-3 text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-r-full transition"
                       aria-label="Increase quantity"
                     >
                       <Plus size={16} />
@@ -330,7 +329,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
               ) : (
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white py-4 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-3"
+                  className="w-full bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] py-4 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-3"
                 >
                   <ShoppingCart className="w-5 h-5" />
                   Add To Cart
@@ -342,24 +341,24 @@ const DetailModal: React.FC<DetailModalProps> = ({
       </div>
 
       {/* Mobile Add to Cart */}
-      <div className="lg:hidden flex-shrink-0 border-t border-[var(--color-border)]">
+      <div className="lg:hidden flex-shrink-0 border-t border-[var(--color-border-default)]">
         <div className="p-6">
           {totalQuantity > 0 ? (
             <div className="flex justify-center w-full">
-              <div className="flex items-center border border-[var(--color-primary)] rounded-full justify-center">
+              <div className="flex items-center border border-[var(--color-brand-primary)] rounded-full justify-center">
                 <button
                   onClick={handleDecrement}
-                  className="p-3 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-l-full transition"
+                  className="p-3 text-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-l-full transition"
                   aria-label="Decrease quantity"
                 >
                   <Minus size={16} />
                 </button>
-                <span className="px-4 py-2 text-sm text-[var(--color-primary)] font-semibold">
+                <span className="px-4 py-2 text-sm text-[var(--color-brand-primary)] font-semibold">
                   {totalQuantity}
                 </span>
                 <button
                   onClick={handleIncrement}
-                  className="p-3 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-r-full transition"
+                  className="p-3 text-[var(--color-brand-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-r-full transition"
                   aria-label="Increase quantity"
                 >
                   <Plus size={16} />
@@ -369,7 +368,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
           ) : (
             <button
               onClick={handleAddToCart}
-              className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white py-4 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-3"
+              className="w-full bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] py-4 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-3"
             >
               <ShoppingCart className="w-5 h-5" />
               Add To Cart
@@ -391,3 +390,9 @@ const DetailModal: React.FC<DetailModalProps> = ({
 };
 
 export default DetailModal;
+
+
+
+
+
+
