@@ -1,50 +1,48 @@
-import { apiClient } from "../../api";
-import Products from "./components/Product";
+import { apiClient } from "@/app/(public)/api";
+import Main from "../category/components/Main";
 
-interface ProductsPageProps {
-  searchParams: { category?: string };
+
+
+interface CategoryProductsPageProps {
+  params: {
+    store: string;
+    slug: string; // ← Changed from 'category'
+  };
 }
 
-export default async function ProductsPage({
-  searchParams,
-}: ProductsPageProps) {
-  const { category: categorySlug } = await searchParams; // ✅ await before using
+export default async function AllProductPage({
+  params,
+}: CategoryProductsPageProps) {
+  const { store, slug: categorySlug } = await(params); // Rename to categorySlug for clarity
+
+  console.log("Store:", store);
+  console.log("Category Slug:", categorySlug);
 
   try {
-    const [featuredAndCategoryResult, initialProductsResult] =
-      await Promise.allSettled([
-        apiClient.getCategoriesAndFeaturedProducts(),
-        apiClient.getProductsByCat(
-          categorySlug ? { category: categorySlug } : {}
-        ),
-      ]);
+    const [categoriesResult, productsResult] = await Promise.all([
+      apiClient.getCategoriesAndFeaturedProducts(store),
+      apiClient.getProductsByCat({ category: categorySlug }, store),
+    ]);
 
-    const categoriesAndFeatured =
-      featuredAndCategoryResult.status === "fulfilled"
-        ? featuredAndCategoryResult.value
-        : null;
 
-    const initialProducts =
-      initialProductsResult.status === "fulfilled"
-        ? initialProductsResult.value.results
-        : [];
+    console.log("categoriesResult:", categoriesResult);
+
+    
 
     return (
       <div className="mt-[8rem] lg:mt-[10rem]">
-        <Products
-          categories={categoriesAndFeatured?.categories ?? []}
-          initialProducts={initialProducts}
+        <Main
+          categories={categoriesResult?.categories ?? []}
+          initialProducts={productsResult?.results ?? []}
           initialCategory={categorySlug}
         />
       </div>
     );
   } catch (error) {
-    console.error("Error in ProductsPage:", error);
+    console.error("Error:", error);
     return (
       <div className="text-center p-8">
-        <p className="text-red-500">
-          Something went wrong while loading products. Please try again later.
-        </p>
+        <p className="text-red-500">Failed to load products</p>
       </div>
     );
   }

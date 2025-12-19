@@ -1,3 +1,5 @@
+"use client";
+
 import FloatingLabelInput from "@/app/component/fields/Input";
 import FloatingLabelTextarea from "@/app/component/fields/Textarea";
 import FancySelect from "./FancySelect";

@@ -1,3 +1,4 @@
+// context/StoreContext.tsx
 "use client";
 
 import { createContext, useContext } from "react";
@@ -7,6 +8,14 @@ export interface StoreConfig {
   description: string;
   darkModeColor?: string;
   lightModeColor?: string;
+  background_image_one?: string;
+  background_image_two?: string;
+  background_image_three?: string;
+  headline?: string;
+  subheading?: string;
+  button_one?: string;
+  button_two?: string;
+  position?: string;
   [key: string]: any;
 }
 
@@ -31,4 +40,3 @@ export function useStoreConfig() {
   }
   return context;
 }
- 

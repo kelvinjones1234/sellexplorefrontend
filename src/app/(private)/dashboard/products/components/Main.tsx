@@ -4,12 +4,10 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   ChevronDown,
-  MoreHorizontal,
   ExternalLink,
   Plus,
   Package,
   Edit,
-  Trash2,
 } from "lucide-react";
 import FloatingLabelInput from "@/app/component/fields/Input";
 import CategoryManager from "./CategoryManager";
@@ -18,7 +16,6 @@ import { apiClient } from "../api";
 import { Product, Category, ProductImage } from "../types";
 import ProductDeleteModal from "./DeleteProductModal";
 import EditProductModal from "./EditProductModal";
-import ProductActions from "./ProductActions";
 import CategoriesTab from "./CategoriesTab";
 import ProductsTab from "./ProductsTab";
 import CouponsTab from "./CouponTab";
@@ -261,11 +258,6 @@ const Main: React.FC = () => {
     itemsPerPage,
   ]);
 
-  useEffect(() => {
-    if (accessToken) {
-      apiClient.setAccessToken(accessToken);
-    }
-  }, [accessToken]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

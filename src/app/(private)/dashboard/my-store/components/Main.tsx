@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useState, ChangeEvent } from "react";
 import {
@@ -14,10 +15,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { apiClient } from "../api";
-import { useAuth } from "@/context/AuthContext";
 
 export default function Main() {
-  const { isAuthenticated, accessToken, logout } = useAuth();
   const [coverImage, setCoverImage] = useState("/api/placeholder/1200/300");
   const [profileImage, setProfileImage] = useState("/api/placeholder/80/80");
 
@@ -29,27 +28,10 @@ export default function Main() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsInitialized(true), 100);
-    return () => clearTimeout(timer);
+    fetchData();
   }, []);
-
-  useEffect(() => {
-    if (isInitialized) {
-      if (!isAuthenticated) {
-        setError("Please log in to access this page.");
-        setLoading(false);
-      } else {
-        fetchData();
-      }
-    }
-  }, [isInitialized, isAuthenticated, accessToken]);
-
-  useEffect(() => {
-    if (accessToken) apiClient.setAccessToken(accessToken);
-  }, [accessToken]);
 
   // === Fetch Functions ===
   const fetchCoverImage = async () => {
@@ -58,7 +40,7 @@ export default function Main() {
       const coverData = await apiClient.getCover();
       if (coverData.cover_image) setCoverImage(coverData.cover_image);
     } catch (err: any) {
-      if (err.status === 401) logout();
+      setError(err.message || "Failed to fetch cover image");
     } finally {
       setIsFetchingCover(false);
     }
@@ -70,11 +52,11 @@ export default function Main() {
       const logoData = await apiClient.getLogo();
       if (logoData.logo) setProfileImage(logoData.logo);
     } catch (err: any) {
-      if (err.status === 401) logout();
+      setError(err.message || "Failed to fetch logo");
     } finally {
       setIsFetchingLogo(false);
     }
-  }; 
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -83,7 +65,6 @@ export default function Main() {
       await Promise.all([fetchCoverImage(), fetchLogoImage()]);
     } catch (err: any) {
       setError(err.message || "Failed to load store data.");
-      if (err.status === 401) logout();
     } finally {
       setLoading(false);
     }
@@ -94,12 +75,6 @@ export default function Main() {
     event: ChangeEvent<HTMLInputElement>,
     type: "logo" | "cover_image"
   ) => {
-    if (!isAuthenticated || !accessToken) {
-      setError("Authentication failed. Please log in again.");
-      logout();
-      return;
-    }
-
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -132,7 +107,6 @@ export default function Main() {
           ? err.message
           : `Failed to upload ${type === "logo" ? "logo" : "cover image"}`
       );
-      if (err.status === 401) logout();
     } finally {
       type === "cover_image"
         ? setIsUploadingCover(false)
@@ -141,7 +115,7 @@ export default function Main() {
     }
   };
 
-  // === Settings Cards === 
+  // === Settings Cards ===
   const settingsCards = [
     {
       icon: Settings,
@@ -196,35 +170,6 @@ export default function Main() {
   ];
 
   // === UI States ===
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg-primary)] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-border-default)] mx-auto mb-4"></div>
-          <p className="text-[var(--color-text-secondary)]">Initializing...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg-primary)] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-[var(--color-danger)] mb-4">
-            {error || "Please log in to access this page."}
-          </p>
-          <button
-            onClick={() => (window.location.href = "/login")}
-            className="px-4 py-2 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-lg hover:bg-[var(--color-brand-hover)] transition-colors"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--color-bg-primary)] flex items-center justify-center">
@@ -245,7 +190,7 @@ export default function Main() {
             onClick={fetchData}
             className="px-4 py-2 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] rounded-lg hover:bg-[var(--color-brand-hover)] transition-colors"
           >
-            Retry
+            Retry 
           </button>
         </div>
       </div>
@@ -294,7 +239,7 @@ export default function Main() {
               accept="image/*"
               className="hidden"
               onChange={(e) => handleImageUpload(e, "cover_image")}
-              disabled={isUploadingCover || !isAuthenticated}
+              disabled={isUploadingCover}
             />
           </label>
         </div>
@@ -314,7 +259,7 @@ export default function Main() {
                 accept="image/*"
                 className="hidden"
                 onChange={(e) => handleImageUpload(e, "logo")}
-                disabled={isUploadingLogo || !isAuthenticated}
+                disabled={isUploadingLogo}
               />
             </label>
           </div>
@@ -340,7 +285,7 @@ export default function Main() {
                       COPY LINK
                     </span>
                     <div className="mt-2 flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
-                      <span>catalog.shop/gents</span>
+                      <span>sellexplore.shop/gents</span>
                       <ExternalLink className="w-3 h-3" />
                     </div>
                   </div>
@@ -392,7 +337,7 @@ export default function Main() {
                   <div className="flex items-start gap-4">
                     <div
                       className="p-2 rounded-lg"
-                      style={{ 
+                      style={{
                         backgroundColor: `${card.color}20`,
                         color: card.color,
                       }}

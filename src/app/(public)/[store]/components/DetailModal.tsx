@@ -153,12 +153,6 @@ const DetailModal: React.FC<DetailModalProps> = ({
         <div className="max-w-[1200px] mx-auto w-full flex flex-col lg:flex-row">
           {/* Left: Images */}
           <div className="relative bg-[var(--color-bg)] p-6 flex-1 lg:w-1/2">
-            {discountPercent !== null && (
-              <span className="absolute top-6 left-6 bg-[var(--color-brand-primary)] text-[var(--color-on-brand)] text-xs font-semibold px-3 py-1 rounded-full z-10 shadow-lg">
-                {discountPercent}% OFF
-              </span>
-            )}
-
             {displayProduct.images.length > 1 && (
               <>
                 <button
@@ -191,7 +185,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
 
             {/* Thumbnail previews */}
             {displayProduct.images.length > 1 && (
-              <div className="flex gap-2 mt-4 justify-center lg:justify-start overflow-x-auto">
+              <div className="flex gap-2 mt-4 justify-start overflow-x-auto">
                 {displayProduct.images.map((img, index) => (
                   <button
                     key={index}
@@ -210,13 +204,13 @@ const DetailModal: React.FC<DetailModalProps> = ({
                   </button>
                 ))}
               </div>
-            )}
+            )} 
           </div>
 
           {/* Right: Product Details */}
           <div className="py-6 px-6 space-y-6 flex-1 lg:w-1/2">
             <div className="space-y-1 lg:space-y-2 text-[var(--color-text)]">
-              <h1 className="text-lg font-semibold capitalize text-[var(--color-primary)]">
+              <h1 className="text-lg font-semibold capitalize text-[var(--color-text-secondary)]">
                 {displayProduct.name}
               </h1>
               <div className="flex items-center gap-3">
@@ -284,7 +278,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                   See Options →
                 </button>
               </div>
-              <div className="flex items-center justify-between p-4 border border-[var(--color-border-default)] rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-[var(--color-border-default)] rounded-xl">
                 <div className="flex items-center gap-3">
                   <div className="w-6 h-6 grid grid-cols-2 gap-0.5">
                     <div className="bg-gray-300 rounded-sm"></div>
@@ -329,7 +323,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
               ) : (
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] py-4 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-3"
+                  className="w-full bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] py-4 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-3"
                 >
                   <ShoppingCart className="w-5 h-5" />
                   Add To Cart
@@ -368,7 +362,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
           ) : (
             <button
               onClick={handleAddToCart}
-              className="w-full bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] py-4 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-3"
+              className="w-full bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] py-4 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-3"
             >
               <ShoppingCart className="w-5 h-5" />
               Add To Cart
@@ -390,9 +384,3 @@ const DetailModal: React.FC<DetailModalProps> = ({
 };
 
 export default DetailModal;
-
-
-
-
-
-

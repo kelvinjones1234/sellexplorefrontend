@@ -9,7 +9,6 @@ import {
   Link as LinkIcon,
   Info,
   HelpCircle,
-  Upload,
   X,
   Plus,
   Trash,
@@ -112,7 +111,7 @@ const BasicTab: React.FC<BasicTabProps> = ({
     <FloatingLabelInput
       type="text"
       name="name"
-      value={basicDetails.name}
+      value={basicDetails.store_name}
       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
         setBasicDetails((prev) => ({ ...prev, name: e.target.value }))
       }
@@ -193,7 +192,7 @@ const LocationTab: React.FC<LocationTabProps> = ({
         setLocationDetails((prev) => ({ ...prev, address: e.target.value }))
       }
       placeholder="Store Address"
-    />
+    />     
   </div>
 );
 
@@ -621,7 +620,7 @@ const Main: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("basic");
   const [basicDetails, setBasicDetails] = useState<BasicDetails>({
     phone: "",
-    name: "",
+    store_name: "",
     description: "",
   });
   const [locationDetails, setLocationDetails] = useState<LocationDetails>({
@@ -662,13 +661,6 @@ const Main: React.FC = () => {
     }
   }, []);
 
-  // Update API client token
-  useEffect(() => {
-    if (accessToken) {
-      apiClient.setAccessToken(accessToken);
-    }
-  }, [accessToken]);
-
   // Save active tab to localStorage
   useEffect(() => {
     localStorage.setItem("activeTab", activeTab);
@@ -692,7 +684,7 @@ const Main: React.FC = () => {
         setError(null);
         const store = await apiClient.getStore();
         setBasicDetails({
-          name: store.name || "",
+          store_name: store.store_name || "",
           phone: store.phone || "",
           description: store.description || "",
         });
@@ -864,42 +856,70 @@ const Main: React.FC = () => {
       }
       setLocalFaqs([]); // Clear local FAQs after saving
 
-      // Update store
+      // Prepare FormData
       const formData = new FormData();
-      formData.append("name", basicDetails.name);
+
+      // Add basic text fields
+      formData.append("store_name", basicDetails.store_name);
       formData.append("phone", basicDetails.phone);
       formData.append("description", basicDetails.description);
       formData.append("country", locationDetails.country);
       formData.append("state", locationDetails.state);
       formData.append("address", locationDetails.address);
       formData.append("business_category", businessCategory);
+
+      // Stringify product_types array
       formData.append("product_types", JSON.stringify(productTypes));
+
       formData.append("story", aboutUs.story);
+
+      // Handle images properly
       const imgKeys = ["image_one", "image_two", "image_three"];
       aboutImages.forEach((image, idx) => {
         const key = imgKeys[idx];
+
         if (image instanceof File) {
-          formData.append(key, image);
+          // New file upload
+          formData.append(key, image, image.name);
         } else if (image === null) {
+          // Explicitly clear the image
           formData.append(key, "");
         }
-        // else string, do not append to keep existing
+        // If image is a string (existing URL), don't append anything
+        // The backend should keep the existing image
       });
-      formData.append("twitter", socialLinks.twitter);
-      formData.append("facebook", socialLinks.facebook);
-      formData.append("tiktok", socialLinks.tiktok);
-      formData.append("snapchat", socialLinks.snapchat);
-      formData.append("instagram", socialLinks.instagram);
-      formData.append("delivery_time", extraInfo.deliveryTime);
-      formData.append("policy", extraInfo.policy);
 
+      // Add social links
+      formData.append("twitter", socialLinks.twitter || "");
+      formData.append("facebook", socialLinks.facebook || "");
+      formData.append("tiktok", socialLinks.tiktok || "");
+      formData.append("snapchat", socialLinks.snapchat || "");
+      formData.append("instagram", socialLinks.instagram || "");
+
+      // Add extra info
+      formData.append("delivery_time", extraInfo.deliveryTime || "");
+      formData.append("policy", extraInfo.policy || "");
+
+      console.log("Sending FormData to API...");
+
+      // Send the update
       await apiClient.updateStoreWithImages(formData);
 
       toast.success("Store details updated successfully!");
+
+      // Optionally refresh the data
+      const updatedStore = await apiClient.getStore();
+      setAboutImages([
+        updatedStore.image_one || null,
+        updatedStore.image_two || null,
+        updatedStore.image_three || null,
+      ]);
     } catch (err: any) {
+      console.error("Update error:", err);
       const errorMessage = err.message || "Failed to update store details";
       setError(errorMessage);
       toast.error(errorMessage);
+
       if (err.status === 401) {
         setError("Session expired. Please log in again.");
         logout();
@@ -908,7 +928,6 @@ const Main: React.FC = () => {
       setUpdating(false);
     }
   };
-
   const handleCancel = () => {
     // Refresh the page or reset to original values
     window.location.reload();
@@ -1000,7 +1019,7 @@ const Main: React.FC = () => {
                     }`}
                 >
                   {tab.label}
-                </button> 
+                </button>
               ))}
             </nav>
           </div>

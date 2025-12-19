@@ -1,3 +1,4 @@
+// context/CacheHydrator.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -10,22 +11,35 @@ interface CacheEntry {
   timestamp: number;
 }
 
-export default function CacheHydrator({
-  dehydratedState,
-}: {
-  dehydratedState: Record<string, CacheEntry>;
-}) {
+interface CacheHydratorProps {
+  dehydratedState?: Record<string, CacheEntry> | null;
+}
+
+export default function CacheHydrator({ dehydratedState }: CacheHydratorProps) {
   const hasHydrated = useRef(false);
 
   useEffect(() => {
-    // Prevent double hydration
     if (hasHydrated.current) return;
-    
-    if (dehydratedState && Object.keys(dehydratedState).length > 0) {
+    if (!dehydratedState || Object.keys(dehydratedState).length === 0) {
+      hasHydrated.current = true;
+      return;
+    } 
+
+    try {
       apiClient.hydrateCache(dehydratedState);
       hasHydrated.current = true;
+
+      if (process.env.NODE_ENV === "development") {
+        const stats = apiClient.getCacheStats();
+        console.log(`[CacheHydrator] ✅ Hydrated ${stats.size} cache entries`);
+      }
+    } catch (error) {
+      console.error("[CacheHydrator] Failed to hydrate cache:", error);
+      hasHydrated.current = true;
     }
-  }, []); // Remove dehydratedState from dependencies to prevent re-hydration
+  }, [dehydratedState]);
+
+  // ✅ REMOVED: All monitoring intervals to prevent noise
 
   return null;
 }

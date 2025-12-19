@@ -4,18 +4,19 @@ import React, { useEffect, useState } from "react";
 import { X, Plus } from "lucide-react";
 import { apiClient } from "../api";
 import FloatingLabelInput from "@/app/component/fields/Input";
-import { useAuth } from "@/context/AuthContext";
-import Alert from "../../components/Alert";
+// Removed useAuth import as we don't need manual token handling here anymore
 
 export interface CreateCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string, image: File | null) => void;
+  // Optional: You might want to trigger a refresh in parent when this succeeds
+  onSuccess?: () => void; 
 }
 
 export default function CreateCategoryModal({
   isOpen,
   onClose,
+  onSuccess
 }: CreateCategoryModalProps) {
   const [name, setName] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -30,14 +31,10 @@ export default function CreateCategoryModal({
     message: string;
   }>({ isOpen: false, type: "success", message: "" });
 
-  const { accessToken } = useAuth();
+  // REMOVED: useEffect for setAccessToken is gone.
+  // The AuthContext interceptor handles this globally now.
 
-  useEffect(() => {
-    if (accessToken) {
-      apiClient.setAccessToken(accessToken);
-    }
-  }, [accessToken]);
-
+  // Reset state when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       setName("");
@@ -71,27 +68,34 @@ export default function CreateCategoryModal({
     setServerAlert({ isOpen: false, type: "success", message: "" });
 
     try {
-      if (!apiClient.isAuthenticated())
-        throw new Error("No access token available");
+      // REMOVED: Manual isAuthenticated check. 
+      // If token is missing/expired, the API interceptor handles the 401/Logout.
 
+      // Just call the API. The interceptor injects the token.
       const response = await apiClient.postCategory(name, image);
 
       setServerAlert({
         isOpen: true,
         type: "success",
-        message: response.message || "Category created successfully!",
+        message: "Category created successfully!", // Assuming response might not always have message
       });
 
       // Clear form on success
       setName("");
       setImage(null);
       setFieldErrors({});
+      
+      // Notify parent to refresh list
+      if (onSuccess) onSuccess();
+      
+      // Optional: Close modal automatically after a short delay or immediately
+      // onClose(); 
     } catch (error: any) {
+      // Error message handling logic from your new APIClient wrapper
       setServerAlert({
         isOpen: true,
         type: "error",
-        message:
-          error.response?.data?.detail || error.message || "An error occurred",
+        message: error.message || "An error occurred",
       });
     } finally {
       setIsLoading(false);
@@ -141,6 +145,7 @@ export default function CreateCategoryModal({
                 Create New Category
               </h2>
               <button
+                type="button" // Important: preventing form submission
                 onClick={onClose}
                 className="p-1 rounded-full hover:bg-[var(--color-bg-secondary)] border border-[var(--color-border-strong)] transition"
                 aria-label="Close modal"
@@ -151,7 +156,11 @@ export default function CreateCategoryModal({
             </div>
 
             {serverAlert.isOpen && (
-              <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+              <div 
+                className={`mt-4 p-3 rounded-lg text-sm ${
+                  serverAlert.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                }`}
+              >
                 {serverAlert.message}
               </div>
             )}
@@ -189,7 +198,7 @@ export default function CreateCategoryModal({
                       <img
                         src={URL.createObjectURL(image)}
                         alt="Category preview"
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover rounded-lg"
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center text-[var(--color-text-muted)]">
@@ -230,14 +239,14 @@ export default function CreateCategoryModal({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] transition disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-brand-primary)] hover:bg-[var(--color-brand-hover)] text-[var(--color-on-brand)] transition disabled:opacity-50 flex items-center"
                   aria-label="Create category"
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
                       <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-[var(--color-on-brand)]"
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-[var(--color-on-brand)]"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"

@@ -46,7 +46,7 @@ const statusColors: Record<string, { bg: string; text: string }> = {
 };
 
 const Main: React.FC = () => {
-  const { isAuthenticated, accessToken, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -93,12 +93,7 @@ const Main: React.FC = () => {
     }
   };
 
-  // Apply access token to API client
-  useEffect(() => {
-    if (accessToken) {
-      apiClient.setAccessToken(accessToken);
-    }
-  }, [accessToken]);
+
 
   // Fetch orders on auth or search change
   useEffect(() => {
@@ -331,3 +326,5 @@ const Main: React.FC = () => {
 };
 
 export default Main;
+
+

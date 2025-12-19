@@ -1,8 +1,7 @@
-import { API_BASE } from "@/constant/baseUrl";
+import { API_BASE_URL } from "@/constant/baseUrl";
 import { getStoreNameFromHost } from "./utils/getStoreName";
 import { ErrorResponse, CouponResponse } from "./types"; // Adjust import path as needed
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || API_BASE;
 
 async function fetchWithTimeout(
   url: string,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useCallback } from "react";
 import { Menu, Search as SearchIcon, X } from "lucide-react";
 import { Logo, ThemeToggleButton, CartButton } from "./SharedComponents";
 import Link from "next/link";
@@ -13,9 +13,7 @@ interface NavProps {
   toggleMobileMenu: () => void;
   isSearchOpen: boolean;
   setIsSearchOpen: (val: boolean) => void;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  isSearchLoading: boolean;
+  onSearchResults?: (results: any, isLoading: boolean, query: string) => void; // <-- ADD query: string
 }
 
 const Nav: React.FC<NavProps> = ({
@@ -24,11 +22,20 @@ const Nav: React.FC<NavProps> = ({
   toggleMobileMenu,
   isSearchOpen,
   setIsSearchOpen,
-  searchQuery,
-  setSearchQuery,
-  isSearchLoading,
+  onSearchResults,
 }) => {
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Memoize the callback to prevent re-renders
+  const handleSearchResults = useCallback(
+  (results: any, isLoading: boolean, query: string) => { // <-- ADD query
+    console.log("[Nav] Search results:", results, "Loading:", isLoading, "Query:", query);
+    if (onSearchResults) {
+      onSearchResults(results, isLoading, query); // <-- PASS query
+    }
+  },
+  [onSearchResults]
+);
 
   return (
     <div className="relative flex items-center z-40 justify-between w-full h-14">
@@ -79,9 +86,7 @@ const Nav: React.FC<NavProps> = ({
           <div className="flex items-center w-full max-w-[700px]">
             <Search
               autoFocus
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              disabled={isSearchLoading}
+              onSearchResults={handleSearchResults}
             />
           </div>
           <button

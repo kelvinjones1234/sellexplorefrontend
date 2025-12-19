@@ -20,8 +20,8 @@ export default function Categories({ categories }: { categories: Category[] }) {
   if (!categories?.length) return null;
 
   return (
-    <section className="my-[1rem]">
-      <div className="flex items-center justify-between mb-6 max-w-[1200px] px-2 mx-auto">
+    <section className="my-[1rem] px-4">
+      <div className="flex items-center justify-between mb-6 max-w-[1200px] mx-auto">
         <h2 className="text-sm md:text-lg font-semibold text-[var(--color-brand-primary)]">
           Categories
         </h2>
@@ -41,7 +41,7 @@ export default function Categories({ categories }: { categories: Category[] }) {
         </div>
       </div>
 
-      <div className="max-w-[1200px] px-2 mx-auto">
+      <div className="max-w-[1200px] mx-auto">
         <div
           ref={scrollRef}
           className="flex overflow-x-auto space-x-5 scrollbar-hide snap-x snap-mandatory no-scrollbar"

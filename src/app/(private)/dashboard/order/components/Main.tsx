@@ -310,3 +310,386 @@ const Main: React.FC = () => {
 };
 
 export default Main;
+
+
+
+
+
+
+
+// "use client";
+
+// import React, { useState, useRef, useEffect } from "react";
+// import {
+//   ShoppingBag,
+//   Users,
+//   CheckCircle,
+//   Search,
+//   ChevronDown,
+//   Banknote,
+// } from "lucide-react";
+// import {
+//   Chart as ChartJS,
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   Tooltip,
+//   Legend,
+// } from "chart.js";
+// import { Line } from "react-chartjs-2";
+// import { apiClient } from "../api";
+
+// import { Order } from "../types";
+
+// ChartJS.register(
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   Tooltip,
+//   Legend
+// );
+
+// const months = [
+//   "Dec 24",
+//   "Jan 25",
+//   "Feb 25",
+//   "Mar 25",
+//   "Apr 25",
+//   "May 25",
+//   "Jun 25",
+//   "Jul 25",
+//   "Aug 25",
+//   "Sep 25",
+//   "Oct 25",
+// ];
+
+// const Main: React.FC = () => {
+//   const [activeTab, setActiveTab] = useState("pending");
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const [period, setPeriod] = useState("This year");
+//   const [orders, setOrders] = useState<Order[]>([]);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//   const tabsRef = useRef<HTMLDivElement>(null);
+
+//   // Calculate stats from orders
+//   const stats = [
+//     {
+//       icon: ShoppingBag,
+//       label: "Total Orders",
+//       value: orders.length,
+//       color: "bg-red-500",
+//     },
+//     {
+//       icon: Banknote,
+//       label: "Total Volume",
+//       value: `NGN ${orders.reduce(
+//         (sum, order) => sum + parseFloat(order.total_amount || "0"),
+//         0
+//       ).toFixed(2)}`,
+//       color: "bg-orange-500",
+//     },
+//     {
+//       icon: Users,
+//       label: "Customers",
+//       value: new Set(orders.map((order) => order.customer.id)).size,
+//       color: "bg-orange-500",
+//     },
+//     {
+//       icon: CheckCircle,
+//       label: "Fulfilled",
+//       value: orders.filter((order) => order.status === "fulfilled").length,
+//       color: "bg-green-500",
+//     },
+//   ];
+
+//   // Prepare chart data
+//   const ordersData = {
+//     labels: months,
+//     datasets: [
+//       {
+//         label: "Total Orders",
+//         data: months.map((month) => {
+//           const monthIndex = months.indexOf(month);
+//           return orders.filter((order) => {
+//             const orderDate = new Date(order.created_at);
+//             return orderDate.getMonth() === monthIndex && orderDate.getFullYear() === 2025;
+//           }).length;
+//         }),
+//         borderColor: "rgb(239, 68, 68)",
+//         backgroundColor: "rgba(239, 68, 68, 0.2)",
+//         borderWidth: 1.5,
+//         pointRadius: 2,
+//         pointHoverRadius: 4,
+//         tension: 0.25,
+//       },
+//     ],
+//   };
+
+//   const options = {
+//     responsive: true,
+//     maintainAspectRatio: false,
+//     plugins: {
+//       legend: { display: false },
+//       title: {
+//         display: true,
+//         text: "Total Orders This Year",
+//         font: { size: 14, weight: "500" },
+//         color: "text-gray-900",
+//         padding: { top: 10, bottom: 20 },
+//       },
+//       tooltip: { mode: "index", intersect: false },
+//     },
+//     interaction: { mode: "nearest", axis: "x", intersect: false },
+//     scales: {
+//       x: {
+//         grid: { display: false },
+//         ticks: { font: { size: 11 } },
+//       },
+//       y: {
+//         beginAtZero: true,
+//         grid: { color: "rgba(0,0,0,0.05)" },
+//         ticks: { stepSize: 2, font: { size: 11 } },
+//       },
+//     },
+//   };
+
+//   // Fetch orders when tab or search term changes
+//   useEffect(() => {
+//     const fetchOrders = async () => {
+//       if (!apiClient.isAuthenticated()) {
+//         setError("Please log in to view orders");
+//         return;
+//       }
+
+//       setIsLoading(true);
+//       setError(null);
+//       try {
+//         const fetchedOrders = await apiClient.getOrders(searchTerm);
+//         setOrders(fetchedOrders.filter((order) => order.status === activeTab));
+//       } catch (err: any) {
+//         setError(err.message || "Failed to fetch orders");
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+
+//     fetchOrders();
+//   }, [activeTab, searchTerm]);
+
+//   const tabs = [
+//     { id: "pending", label: "Pending" },
+//     { id: "processing", label: "Processing" },
+//     { id: "fulfilled", label: "Fulfilled" },
+//     { id: "cancelled", label: "Cancelled" },
+//     { id: "abandoned", label: "Abandoned" },
+//   ];
+
+//   const scrollToTab = (tabId: string) => {
+//     const tab = document.getElementById(tabId);
+//     if (tab && tabsRef.current) {
+//       const tabRect = tab.getBoundingClientRect();
+//       const containerRect = tabsRef.current.getBoundingClientRect();
+//       tabsRef.current.scrollTo({
+//         left:
+//           tabsRef.current.scrollLeft +
+//           tabRect.left -
+//           containerRect.left -
+//           containerRect.width / 2 +
+//           tabRect.width / 2,
+//         behavior: "smooth",
+//       });
+//     }
+//     setActiveTab(tabId);
+//   };
+
+//   const scrollTabs = (direction: "left" | "right") => {
+//     if (tabsRef.current) {
+//       const scrollAmount = 150;
+//       tabsRef.current.scrollBy({
+//         left: direction === "left" ? -scrollAmount : scrollAmount,
+//         behavior: "smooth",
+//       });
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gray-50 text-gray-700">
+//       {/* Header */}
+//       <header className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+//         <div className="flex items-center justify-between">
+//           <div className="flex items-center gap-2 text-sm">
+//             <span>Orders</span>
+//           </div>
+//           <div className="flex items-center gap-2">
+//             <span className="text-blue-500">⚡</span>
+//             <span className="text-sm font-medium">Quick Actions</span>
+//             <ChevronDown className="w-4 h-4" />
+//           </div>
+//         </div>
+//       </header>
+
+//       <div className="pb-8 px-4">
+//         <div className="max-w-6xl mx-auto">
+//           {/* Stats Row */}
+//           <div className="grid grid-cols-2 md:grid-cols-4 my-6 border-b border-gray-200">
+//             {stats.map((stat, index) => {
+//               const Icon = stat.icon;
+//               return (
+//                 <div
+//                   key={index}
+//                   className="text-center p-4 bg-white hover:bg-gray-50"
+//                 >
+//                   <div
+//                     className={`inline-flex items-center p-3 rounded-full ${stat.color} mb-2 mx-auto`}
+//                   >
+//                     <Icon className="w-5 h-5 text-white" />
+//                   </div>
+//                   <div className="text-xs md:text-sm font-medium">{stat.label}</div>
+//                   <div className="text-lg md:text-2xl font-bold">{stat.value}</div>
+//                 </div>
+//               );
+//             })}
+//           </div>
+
+//           {/* Chart */}
+//           <div className="bg-white rounded-xl md:py-6 mb-8 shadow-sm">
+//             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 px-4">
+//               <h3 className="text-sm font-medium">Total Orders</h3>
+//               <select
+//                 value={period}
+//                 onChange={(e) => setPeriod(e.target.value)}
+//                 className="text-sm bg-transparent border-none"
+//               >
+//                 <option>This year</option>
+//               </select>
+//             </div>
+//             <div className="h-64 md:h-80 px-4">
+//               <Line options={options} data={ordersData} />
+//             </div>
+//           </div>
+
+//           {/* Orders Table Section */}
+//           <div className="bg-white rounded-xl md:p-6 shadow-sm">
+//             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 px-4">
+//               {/* Tabs */}
+//               <div className="relative flex items-center w-full sm:w-auto">
+//                 <div
+//                   ref={tabsRef}
+//                   className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 sm:pb-0 snap-x scroll-smooth"
+//                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+//                 >
+//                   <div className="flex gap-2 min-w-max">
+//                     {tabs.map((tab) => (
+//                       <button
+//                         key={tab.id}
+//                         id={tab.id}
+//                         onClick={() => scrollToTab(tab.id)}
+//                         className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap snap-center flex-shrink-0 ${
+//                           activeTab === tab.id
+//                             ? "bg-blue-500 text-white"
+//                             : "text-gray-700 hover:bg-gray-100"
+//                         }`}
+//                       >
+//                         {tab.label}
+//                       </button>
+//                     ))}
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* Search + Actions */}
+//               <div className="flex items-center gap-2 w-full sm:w-auto">
+//                 <div className="relative flex-1 sm:flex-none">
+//                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+//                   <input
+//                     type="text"
+//                     placeholder="Search orders"
+//                     value={searchTerm}
+//                     onChange={(e) => setSearchTerm(e.target.value)}
+//                     className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+//                   />
+//                 </div>
+//                 <div className="relative">
+//                   <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm">
+//                     Actions
+//                     <ChevronDown className="w-4 h-4" />
+//                   </button>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Orders Table */}
+//             {isLoading ? (
+//               <div className="text-center py-12">
+//                 <p className="text-gray-700">Loading orders...</p>
+//               </div>
+//             ) : error ? (
+//               <div className="text-center py-12">
+//                 <p className="text-red-500">{error}</p>
+//               </div>
+//             ) : orders.length === 0 ? (
+//               <div className="text-center py-12">
+//                 <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+//                 <h3 className="text-lg font-medium text-gray-900 mb-2">
+//                   No Orders
+//                 </h3>
+//                 <p className="text-gray-700">
+//                   You have no {activeTab} orders
+//                 </p>
+//               </div>
+//             ) : (
+//               <div className="overflow-x-auto">
+//                 <table className="w-full text-sm">
+//                   <thead>
+//                     <tr className="border-b border-gray-200">
+//                       <th className="py-3 px-4 text-left font-medium">Order ID</th>
+//                       <th className="py-3 px-4 text-left font-medium">Customer</th>
+//                       <th className="py-3 px-4 text-left font-medium">Date</th>
+//                       <th className="py-3 px-4 text-left font-medium">Total</th>
+//                       <th className="py-3 px-4 text-left font-medium">Status</th>
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {orders.map((order) => (
+//                       <tr key={order.id} className="border-b border-gray-100">
+//                         <td className="py-3 px-4">{order.o_id}</td>
+//                         <td className="py-3 px-4">{order.customer.name}</td>
+//                         <td className="py-3 px-4">
+//                           {new Date(order.created_at).toLocaleDateString()}
+//                         </td>
+//                         <td className="py-3 px-4">NGN {order.total_amount}</td>
+//                         <td className="py-3 px-4">
+//                           <span
+//                             className={`px-2 py-1 rounded-full text-xs ${
+//                               order.status === "fulfilled"
+//                                 ? "bg-green-100 text-green-800"
+//                                 : order.status === "cancelled"
+//                                 ? "bg-red-100 text-red-800"
+//                                 : "bg-yellow-100 text-yellow-800"
+//                             }`}
+//                           >
+//                             {order.status}
+//                           </span>
+//                         </td>
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Main;
+
+
+

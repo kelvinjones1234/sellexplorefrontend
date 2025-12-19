@@ -15,7 +15,7 @@ const MobileNavbar: React.FC<MobileNavProps> = ({
   totalItems,
 }) => (
   <div
-    className={`fixed z-[50] inset-0 transition-all duration-300 ${
+    className={`fixed z-[999] inset-0 transition-all duration-300 ${
       isOpen ? "visible opacity-100" : "invisible opacity-0"
     }`}
   >

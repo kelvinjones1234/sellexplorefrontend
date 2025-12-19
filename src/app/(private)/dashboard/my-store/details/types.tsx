@@ -6,7 +6,7 @@ export interface ErrorResponse {
 
 export interface Store {
   id: number;
-  name: string;
+  store_name: string;
   phone: string;
   description: string;
   country: string;
@@ -48,7 +48,7 @@ export interface Option {
 
 export interface BasicDetails {
   phone: string;
-  name: string;
+  store_name: string;
   description: string;
 }
 

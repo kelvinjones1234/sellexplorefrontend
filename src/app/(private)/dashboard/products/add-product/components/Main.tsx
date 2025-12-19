@@ -18,15 +18,9 @@ const Main = () => {
   const { accessToken } = useAuth();
 
   useEffect(() => {
-    if (accessToken) {
-      apiClient.setAccessToken(accessToken);
-    }
-  }, [accessToken]);
-
-  useEffect(() => {
     const fetchCategories = async () => {
-      try {
-        if (!accessToken) return;
+      try { 
+        if (!apiClient.isAuthenticated()) return;
         const result = await apiClient.getCategories();
         setCategories(result);
       } catch (err) {
@@ -34,7 +28,7 @@ const Main = () => {
       }
     };
     fetchCategories();
-  }, [accessToken]);
+  }, []); // Empty dependency array to run only on mount
 
   const handleSelectFiles = (
     e: React.ChangeEvent<HTMLInputElement>,

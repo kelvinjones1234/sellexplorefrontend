@@ -1,16 +1,51 @@
+
+
+
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
-import FloatingLabelSelect from "@/app/component/fields/Selection";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  memo,
+} from "react";
 import { ShoppingCart, Plus, Minus } from "lucide-react";
-import { apiClient } from "@/app/(public)/api";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Category, Product } from "@/app/(public)/types";
-import DetailModal from "../../components/DetailModal";
+import FloatingLabelSelect from "@/app/component/fields/Selection";
+import { FilteredProductResponse } from "@/app/(public)/types";
+import DetailModal from "../../../components/DetailModal";
 import OptionModal from "@/app/(public)/components/OptionModal";
 import { useCart } from "@/context/CartContext";
+import { useRouter, useParams } from "next/navigation";
 
-// Memoized ProductCard component to prevent unnecessary re-renders
+// ============================================================================
+// TYPES
+// ============================================================================
+export interface ProductOption {
+  id: number;
+  name: string;
+  image?: string | null;
+}
+
+export interface ProductImage {
+  image: string;
+  thumbnail?: boolean;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  oldPrice?: number;
+  discount?: string;
+  images?: ProductImage[];
+  options?: ProductOption[];
+  category?: { id: number; name: string; slug: string };
+}
+
+// ============================================================================
+// PRODUCT CARD
+// ============================================================================
 const ProductCard = memo(
   ({
     product,
@@ -29,40 +64,27 @@ const ProductCard = memo(
     onUpdateQuantity: (cartItemId: string, quantity: number) => void;
     getCartItemForProduct: (product: Product) => any;
   }) => {
-    // Memoize expensive calculations
     const calculations = useMemo(() => {
-      const price = product.price ? Number(product.price) : 0;
-      const discountPrice = product.discount_price
-        ? Number(product.discount_price)
-        : null;
-
+      const originalPrice = product.oldPrice ?? product.price;
+      const salePrice = product.price;
       let discountPercent: number | null = null;
-      if (price > 0 && discountPrice !== null && discountPrice < price) {
-        discountPercent = Math.round(((price - discountPrice) / price) * 100);
+      if (product.oldPrice && product.oldPrice > product.price) {
+        discountPercent = Math.round(
+          ((originalPrice - salePrice) / originalPrice) * 100
+        );
       }
-
+      let badge: string | null = product.discount;
+      if (!badge && discountPercent !== null) {
+        badge = `${discountPercent}% OFF`;
+      }
       const thumbnail =
-        product.images.find((img) => img.is_thumbnail)?.image ||
-        product.images[0]?.image ||
+        product.images?.find((img) => img.thumbnail)?.image ||
+        product.images?.[0]?.image ||
+        product.image ||
         "/placeholder.png";
-
       const hasOptions = (product.options?.length ?? 0) > 0;
-      const finalPrice = discountPrice ?? price;
-
-      return {
-        price,
-        discountPrice,
-        discountPercent,
-        thumbnail,
-        hasOptions,
-        finalPrice,
-      };
-    }, [
-      product.price,
-      product.discount_price,
-      product.images,
-      product.options,
-    ]);
+      return { salePrice, badge, thumbnail, hasOptions };
+    }, [product]);
 
     const cartItem = useMemo(
       () => getCartItemForProduct(product),
@@ -100,20 +122,21 @@ const ProductCard = memo(
       product,
     ]);
 
-    const handleImageClick = useCallback(() => {
-      onOpenModal(product);
-    }, [product, onOpenModal]);
-
-    const handleCartButtonClick = useCallback(() => {
-      onHandleCartClick(product);
-    }, [product, onHandleCartClick]);
+    const handleImageClick = useCallback(
+      () => onOpenModal(product),
+      [product, onOpenModal]
+    );
+    const handleCartButtonClick = useCallback(
+      () => onHandleCartClick(product),
+      [product, onHandleCartClick]
+    );
 
     return (
       <div className="rounded-2xl border border-[var(--color-border-default)] overflow-hidden group relative hover:shadow-sm transition">
         <div className="relative">
-          {calculations.discountPercent !== null && (
+          {calculations.badge && (
             <span className="absolute top-2 left-2 bg-pink-500 text-white text-xs font-semibold px-2 py-1 rounded z-10">
-              {calculations.discountPercent}% OFF
+              {calculations.badge}
             </span>
           )}
           <img
@@ -125,7 +148,6 @@ const ProductCard = memo(
             decoding="async"
           />
         </div>
-
         <div className="py-4 px-2">
           <h3
             className="font-medium text-[var(--color-body)] text-sm truncate"
@@ -135,11 +157,11 @@ const ProductCard = memo(
           </h3>
           <div className="flex flex-col mt-2">
             <span className="text-[var(--color-brand-primary)] font-semibold text-sm">
-              NGN {calculations.finalPrice.toLocaleString()}
+              NGN {calculations.salePrice.toLocaleString()}
             </span>
-            {calculations.discountPrice !== null && (
+            {product.oldPrice && (
               <span className="text-[var(--color-body)] line-through text-xs">
-                NGN {calculations.price.toLocaleString()}
+                NGN {product.oldPrice.toLocaleString()}
               </span>
             )}
           </div>
@@ -147,15 +169,13 @@ const ProductCard = memo(
             <div className="text-[.7rem] text-[var(--color-text-muted)] leading-relaxed">
               Options: <span>{product.options?.length || "None"}</span>
             </div>
-
             {totalQuantity > 0 ? (
               <div className="flex items-center border border-[var(--color-border-strong)] rounded-full">
                 <button
                   onClick={handleDecrease}
                   className="p-1 text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-l-full transition"
-                  aria-label={`Decrease quantity for ${product.name}`}
                 >
-                  <Minus size={14}/>
+                  <Minus size={14} />
                 </button>
                 <span className="px-2 text-sm text-[var(--color-brand-primary)] min-w-[2rem] text-center">
                   {totalQuantity}
@@ -163,7 +183,6 @@ const ProductCard = memo(
                 <button
                   onClick={handleIncrease}
                   className="p-1 text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-r-full transition"
-                  aria-label={`Increase quantity for ${product.name}`}
                 >
                   <Plus size={14} />
                 </button>
@@ -172,7 +191,6 @@ const ProductCard = memo(
               <button
                 onClick={handleCartButtonClick}
                 className="border border-[var(--color-brand-primary)] text-[var(--color-brand-primary)] rounded-full h-8 w-8 flex items-center justify-center hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)]"
-                aria-label={`Add ${product.name} to cart`}
               >
                 <ShoppingCart size={18} />
               </button>
@@ -186,113 +204,97 @@ const ProductCard = memo(
 
 ProductCard.displayName = "ProductCard";
 
-interface ProductsProps {
-  categories: Category[];
-  initialProducts: Product[];
-  initialCategory?: string;
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+interface MainProps {
+  initialData: FilteredProductResponse<Product> | null;
+  initialError: string | null;
+  searchWord: string;
+  categories?: { id: number; name: string; slug: string }[];
 }
 
-const Products: React.FC<ProductsProps> = ({
-  categories,
-  initialProducts,
-  initialCategory,
+const Main: React.FC<MainProps> = ({
+  initialData,
+  initialError,
+  searchWord,
+  categories: passedCategories,
 }) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { cart, addToCart, updateQuantity } = useCart();
+  const router = useRouter();
+  const params = useParams();
+  const store = params?.store as string;
 
-  const [selectedCategory, setSelectedCategory] = useState<string>(
-    initialCategory ?? "__all__"
+  const [productsResponse] =
+    useState<FilteredProductResponse<Product> | null>(initialData);
+  const [error] = useState<string | null>(initialError);
+  const [loading] = useState(false);
+
+  // ✅ CATEGORY SELECTION (uses passed categories if provided)
+  const categories = useMemo(() => {
+    if (passedCategories && passedCategories.length > 0) {
+      return passedCategories.map((c) => ({
+        value: c.slug,
+        label: c.name,
+      }));
+    }
+    if (!productsResponse?.results) return [];
+    const uniqueCats = new Map<string, string>();
+    productsResponse.results.forEach((p) => {
+      if (p.category) uniqueCats.set(p.category.slug, p.category.name);
+    });
+    return Array.from(uniqueCats, ([slug, name]) => ({
+      value: slug,
+      label: name,
+    }));
+  }, [passedCategories, productsResponse]);
+
+  const [selectedCategory, setSelectedCategory] = useState("__all__");
+
+  const filteredProducts = useMemo(() => {
+    if (selectedCategory === "__all__") return productsResponse?.results ?? [];
+    return (
+      productsResponse?.results.filter(
+        (p) => p.category?.slug === selectedCategory
+      ) ?? []
+    );
+  }, [selectedCategory, productsResponse]);
+
+  const categoryOptions = useMemo(
+    () => [{ value: "__all__", label: "All categories" }, ...categories],
+    [categories]
   );
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [loading, setLoading] = useState<boolean>(false);
 
-  // Modal states
+  const handleCategoryChange = useCallback(
+    (val: string | number) => {
+      const categorySlug = val as string;
+
+      if (categorySlug === "__all__") {
+        // Navigate to all products page or search page
+        router.push(`/category/`);
+      } else {
+        // Navigate to specific category page
+        router.push(`/category/${categorySlug}?`);
+      }
+    },
+    [router, store, searchWord]
+  );
+
+  const categoryLabel = useMemo(() => {
+    if (selectedCategory === "__all__") return "All Products";
+    const found = categories.find((c) => c.value === selectedCategory);
+    return found ? found.label : "Products";
+  }, [selectedCategory, categories]);
+
+  // ============================================================================
+  // CART & MODALS
+  // ============================================================================
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [optionModalProduct, setOptionModalProduct] = useState<Product | null>(
     null
   );
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-
-  // Dropdown options
-  const categoryOptions = useMemo(
-    () => [
-      { value: "__all__", label: "All categories" },
-      ...categories.map((cat) => ({
-        value: cat.slug,
-        label: cat.name,
-      })),
-    ],
-    [categories]
-  );
-
-  // Capitalize words helper
-  const capitalizeWords = (str: string) =>
-    str.replace(/\b\w/g, (char) => char.toUpperCase());
-
-  // Compute label for header
-  const categoryLabel = useMemo(() => {
-    if (selectedCategory === "__all__") {
-      return "All Products";
-    }
-    const found = categories.find((c) => c.slug === selectedCategory);
-    return found ? `${capitalizeWords(found.name)}` : "Products";
-  }, [selectedCategory, categories]);
-
-  // Memoize cart quantities
-  const productQuantities = useMemo(() => {
-    const quantities = new Map<number, number>();
-
-    products.forEach((product) => {
-      const totalQuantity = cart
-        .filter((item) => item.id === product.id)
-        .reduce((total, item) => total + item.quantity, 0);
-      quantities.set(product.id, totalQuantity);
-    });
-
-    return quantities;
-  }, [cart, products]);
-
-  // Update selectedCategory when URL query changes
-  useEffect(() => {
-    const urlCategory = searchParams.get("category") ?? "__all__";
-    setSelectedCategory(urlCategory);
-  }, [searchParams]);
-
-  // Refetch products when selectedCategory changes
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const filters =
-          selectedCategory !== "__all__" ? { category: selectedCategory } : {};
-        const response = await apiClient.getProductsByCat(filters);
-        setProducts(response.results);
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [selectedCategory]);
-
-  // Memoized callback functions
-  const handleCategoryChange = useCallback(
-    (val: string | number) => {
-      const newCategory = val as string;
-      const params = new URLSearchParams(searchParams.toString());
-      if (newCategory === "__all__") {
-        params.delete("category");
-      } else {
-        params.set("category", newCategory);
-      }
-      router.push(`/products?${params.toString()}`);
-    },
-    [router, searchParams]
-  );
 
   const openModal = useCallback((product: Product) => {
     setSelectedProduct(product);
@@ -317,33 +319,23 @@ const Products: React.FC<ProductsProps> = ({
   const handleCartClick = useCallback(
     (product: Product) => {
       const hasOptions = (product.options?.length ?? 0) > 0;
-
       if (hasOptions) {
         openOptionModal(product);
       } else {
-        const price = Number(product.price);
-        const discountPrice = product.discount_price
-          ? Number(product.discount_price)
-          : null;
-
-        if (isNaN(price) || price <= 0) {
-          console.error(
-            `Invalid price for product ${product.name}:`,
-            product.price
-          );
-          return;
-        }
-
+        const price = product.oldPrice ?? product.price;
+        const discountPrice = product.oldPrice ? product.price : null;
+        const thumbnail =
+          product.images?.find((img) => img.thumbnail)?.image ||
+          product.images?.[0]?.image ||
+          product.image ||
+          "/placeholder.png";
         addToCart({
           id: product.id,
           name: product.name,
           price,
           discount_price: discountPrice,
           selectedOption: "default",
-          image:
-            product.images.find((img) => img.is_thumbnail)?.image ||
-            product.images[0]?.image ||
-            "/placeholder.png",
+          image: thumbnail,
         });
       }
     },
@@ -363,20 +355,38 @@ const Products: React.FC<ProductsProps> = ({
     [cart]
   );
 
-  const optionModalPrice = useMemo(() => {
-    if (!optionModalProduct) return 0;
-    return Number(
-      optionModalProduct.discount_price ?? optionModalProduct.price ?? 0
-    );
-  }, [optionModalProduct]);
+  const productQuantities = useMemo(() => {
+    const quantities = new Map<number, number>();
+    if (!filteredProducts) return quantities;
+    filteredProducts.forEach((product) => {
+      const totalQuantity = cart
+        .filter((item) => item.id === product.id)
+        .reduce((t, i) => t + i.quantity, 0);
+      quantities.set(product.id, totalQuantity);
+    });
+    return quantities;
+  }, [cart, filteredProducts]);
 
+  const optionModalPrice = useMemo(
+    () => Number(optionModalProduct?.price ?? 0),
+    [optionModalProduct]
+  );
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
   return (
-    <div className="max-w-[1200px] px-4 mx-auto">
-      {/* Header */}
+    <div className="max-w-[1200px] px-4 mx-auto py-8 mt-[8rem] lg:mt-[10rem]">
       <div className="flex justify-between items-center my-4">
-        <h2 className="text-[var(--color-brand-primary)] text-sm md:text-lg font-semibold">
-          {categoryLabel}
-        </h2>
+        <div>
+          <h2 className="text-[var(--color-text-primary)] text-xl md:text-2xl font-semibold">
+            {categoryLabel} — Search results for: "{searchWord}"
+          </h2>
+          <p className="text-[var(--color-text-secondary)] text-sm">
+            {filteredProducts.length} items found
+          </p>
+        </div>
+
         <div className="w-[12rem] md:w-[20rem] my-[1rem]">
           <FloatingLabelSelect
             name="category"
@@ -388,33 +398,13 @@ const Products: React.FC<ProductsProps> = ({
         </div>
       </div>
 
-      {/* Product Grid */}
       {loading ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div className="text-center py-12 text-red-500">Error: {error}</div>
+      ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="bg-[var(--color-bg-primary)] rounded-2xl border border-[var(--color-border-secondary)] overflow-hidden animate-pulse"
-            >
-              {/* Image skeleton */}
-              <div className="w-full h-[12rem] sm:h-[15rem] bg-[var(--color-border-default)]" />
-
-              <div className="py-4 px-2 space-y-3">
-                {/* Title skeleton */}
-                <div className="h-4 bg-[var(--color-border-default)] rounded w-3/4" />
-                {/* Price skeleton */}
-                <div className="h-4 bg-[var(--color-border-default)] rounded w-1/2" />
-                {/* Cart button skeleton */}
-                <div className="flex justify-end mt-3">
-                  <div className="h-8 w-8 rounded-full bg-[var(--color-border-default)]" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : products.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -429,25 +419,20 @@ const Products: React.FC<ProductsProps> = ({
         </div>
       ) : (
         <div className="text-center py-12">
-          <div className="text-[var(--color-text-secondary)] mb-4">
-            <ShoppingCart size={48} className="mx-auto opacity-50" />
-          </div>
+          <ShoppingCart size={48} className="mx-auto opacity-50" />
           <p className="text-[var(--color-text-secondary)] text-lg">
-            No products available at the moment.
+            No products found in this category.
           </p>
         </div>
       )}
 
-      {/* Detail Modal */}
       {isModalOpen && selectedProduct && (
         <DetailModal
           isOpen={isModalOpen}
           onClose={closeModal}
-          product={selectedProduct}
+          productSlug={selectedProduct.id.toString()}
         />
       )}
-
-      {/* Option Modal */}
       {isOptionModalOpen && optionModalProduct && (
         <OptionModal
           isOpen={isOptionModalOpen}
@@ -461,4 +446,4 @@ const Products: React.FC<ProductsProps> = ({
   );
 };
 
-export default Products;
+export default Main;

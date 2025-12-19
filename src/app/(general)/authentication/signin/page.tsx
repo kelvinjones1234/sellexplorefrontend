@@ -14,10 +14,10 @@ const SignupPage = () => {
               <div className="mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300 dark:border-gray-700" />
+                    <div className="w-full border-t border-[var(--color-border-default)]" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:via-gray-900 dark:to-slate-800 text-gray-500 dark:text-gray-400">
+                    <span className="px-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]">
                       Don&apos;t have an account?
                     </span>
                   </div>
@@ -27,8 +27,8 @@ const SignupPage = () => {
               {/* Sign In Link */}
               <div className="text-center">
                 <a
-                  href={`/#pricing`}
-                  className="font-medium hover:text-gray-900 dark:hover:text-white"
+                  href={`/authentication/signup`}
+                  className="font-medium hover:text-[var(--color-brand-hover)] text-[var(--color-text-primary)]"
                 >
                   Create your account
                   <span className="text-[var(--color-primary)] ml-1">→</span>

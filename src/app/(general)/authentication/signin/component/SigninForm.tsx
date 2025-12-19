@@ -151,7 +151,7 @@ const SigninForm: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 top-1 right-0 pr-3 flex items-center z-10"
+              className="absolute text-[var(--color-text-secondary)] inset-y-0 top-1 right-0 pr-3 flex items-center z-10"
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />

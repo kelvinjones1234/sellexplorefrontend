@@ -1,10 +1,11 @@
 "use client";
 
-import { ShoppingCart, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowRight } from "lucide-react";
 import React, { useState, useMemo, useCallback, memo } from "react";
 import { FilteredProductResponse } from "../../types";
 import { useCart } from "@/context/CartContext";
 import OptionModal from "@/app/(public)/components/OptionModal";
+import Link from "next/link";
 
 export interface ProductOption {
   id: number;
@@ -35,7 +36,8 @@ interface FilteredItemsProps {
   products: FilteredProductResponse<Product>;
   isLoading?: boolean;
   error?: string | null;
-  onOpenModal?: (product: Product) => void; // Optional, but passed from Navbar
+  onOpenModal?: (product: Product) => void;
+  searchWord?: string; // <-- ADD THIS PROP
 }
 
 // Memoized ProductCard component to prevent unnecessary re-renders
@@ -173,7 +175,7 @@ const ProductCard = memo(
             </div>
 
             {totalQuantity > 0 ? (
-              <div className="flex items-center border border-[var(--color-border-strong)] rounded-full">
+              <div className="flex items-center border border-[var(--color-border-default)] rounded-full">
                 <button
                   onClick={handleDecrease}
                   className="p-1 text-[var(--color-text-primary)] hover:bg-[var(--color-brand-primary)] hover:text-[var(--color-on-brand)] rounded-l-full transition"
@@ -215,6 +217,7 @@ const FilteredItems: React.FC<FilteredItemsProps> = ({
   isLoading,
   error,
   onOpenModal,
+  searchWord,
 }) => {
   const { cart, addToCart, updateQuantity } = useCart();
 
@@ -223,6 +226,8 @@ const FilteredItems: React.FC<FilteredItemsProps> = ({
     null
   );
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
+
+  console.log("Filtered products", products.count);
 
   // Memoize cart quantities
   const productQuantities = useMemo(() => {
@@ -319,10 +324,10 @@ const FilteredItems: React.FC<FilteredItemsProps> = ({
     <div className="max-w-[1200px] px-4 mx-auto py-[2.5rem]">
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, idx) => (
+          {Array.from({ length: 4 }).map((_, idx) => (
             <div
               key={idx}
-              className="bg-[var(--color-bg-primary)] rounded-2xl border border-[var(--color-border-secondary)] overflow-hidden animate-pulse"
+              className="bg-[var(--color-bg-primary)] rounded-2xl border border-[var(--color-border-default)] overflow-hidden animate-pulse"
             >
               {/* Image skeleton */}
               <div className="w-full h-[12rem] sm:h-[15rem] bg-[var(--color-border-default)]" />
@@ -378,6 +383,19 @@ const FilteredItems: React.FC<FilteredItemsProps> = ({
           product={optionModalProduct}
         />
       )}
+      {products?.count > 0 &&
+        searchWord && ( // <-- CHECK FOR searchWord
+          <Link
+            href={`/products/search?query=${encodeURIComponent(searchWord)}`}
+          >
+            <div className="pt-8">
+              <div className="flex items-center gap-2 text-[var(--color-brand-primary)] cursor-pointer hover:underline">
+                <span>See all results ({products.count})</span>
+                <ArrowRight size={18} />
+              </div>
+            </div>
+          </Link>
+        )}
     </div>
   );
 };

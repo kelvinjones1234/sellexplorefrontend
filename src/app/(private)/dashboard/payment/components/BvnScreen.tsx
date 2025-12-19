@@ -1,7 +1,7 @@
 // "use client";
 // import React, { useState, useEffect } from "react";
 // import FloatingLabelInput from "@/app/component/fields/Input";
-
+// import { apiClient } from "../api";
 // interface UserData {
 //   firstName?: string;
 //   lastName?: string;
@@ -18,6 +18,7 @@
 //   updateUserData: (data: Partial<UserData>) => void;
 //   goNext: () => void;
 //   markStepComplete: (stepId: number) => void;
+//   accessToken: string | null; // Add accessToken prop
 // }
 
 // const BvnScreen: React.FC<BvnScreenProps> = ({
@@ -25,6 +26,7 @@
 //   updateUserData,
 //   goNext,
 //   markStepComplete,
+//   accessToken,
 // }) => {
 //   const [bvn, setBvn] = useState(userData.bvn || "");
 //   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,11 @@
 //   }, [userData]);
 
 //   const handleNext = async () => {
+//     if (!accessToken) {
+//       setError("Authentication required. Please log in.");
+//       return;
+//     }
+
 //     if (!bvn) {
 //       setError("Please enter your BVN");
 //       return;
@@ -47,14 +54,22 @@
 
 //     setLoading(true);
 //     try {
-//       // Simulate API call
-//       await new Promise((resolve) => setTimeout(resolve, 1000));
-
+//       const res = await apiClient.submitBvn({ bvn });
+//       if (!res.verified) {
+//         setError(
+//           `Verification Failed. The name provided did not match the name on record. Please confirm the name linked to your BVN and try again. Confidence: ${res.confidence}`
+//         );
+//         return;
+//       }
 //       updateUserData({ bvn });
 //       markStepComplete(3); // Mark BVN step as complete
 //       goNext();
-//     } catch (err) {
-//       setError("An error occurred. Please try again.");
+//     } catch (err: any) {
+//       if (err.status === 401) {
+//         setError("Authentication required. Please log in.");
+//       } else {
+//         setError(err.message || "An error occurred. Please try again.");
+//       }
 //     } finally {
 //       setLoading(false);
 //     }
@@ -129,12 +144,12 @@
 
 
 
-
-
 "use client";
 import React, { useState, useEffect } from "react";
 import FloatingLabelInput from "@/app/component/fields/Input";
 import { apiClient } from "../api";
+import { useAuth } from "@/context/AuthContext";
+
 interface UserData {
   firstName?: string;
   lastName?: string;
@@ -151,7 +166,6 @@ interface BvnScreenProps {
   updateUserData: (data: Partial<UserData>) => void;
   goNext: () => void;
   markStepComplete: (stepId: number) => void;
-  accessToken: string | null; // Add accessToken prop
 }
 
 const BvnScreen: React.FC<BvnScreenProps> = ({
@@ -159,8 +173,8 @@ const BvnScreen: React.FC<BvnScreenProps> = ({
   updateUserData,
   goNext,
   markStepComplete,
-  accessToken,
 }) => {
+  const { isAuthenticated } = useAuth();
   const [bvn, setBvn] = useState(userData.bvn || "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -170,7 +184,7 @@ const BvnScreen: React.FC<BvnScreenProps> = ({
   }, [userData]);
 
   const handleNext = async () => {
-    if (!accessToken) {
+    if (!isAuthenticated) {
       setError("Authentication required. Please log in.");
       return;
     }

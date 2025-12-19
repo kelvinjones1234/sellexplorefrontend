@@ -13,7 +13,7 @@ const LogoutButton = () => {
       onClick={logout}
     >
       <LogOut className="h-5 w-5 mr-3" />
-      Sign Out
+      Sign Out 
     </button>
   );
 };
